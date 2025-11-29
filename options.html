@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Shadow Intern Settings</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      background: #000;
+      color: #e7e9ea;
+      padding: 16px;
+    }
+    h1 {
+      font-size: 20px;
+      margin-bottom: 12px;
+    }
+    h2 {
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      margin-top: 12px;
+      margin-bottom: 4px;
+    }
+    select, input[type="number"], input[type="text"] {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #2f3336;
+      background: #000;
+      color: #e7e9ea;
+      font-size: 13px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #2f3336;
+      background: #000;
+      color: #e7e9ea;
+      font-size: 13px;
+      resize: vertical;
+    }
+    .hint {
+      font-size: 11px;
+      color: #8b98a5;
+      margin-top: 2px;
+    }
+    .card {
+      border: 1px solid #1d9bf0;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      background: rgba(29, 155, 240, 0.05);
+    }
+    .mode-card {
+      border: 1px solid #2f3336;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 12px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .mode-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+    }
+    .mode-card.disabled {
+      opacity: 0.5;
+    }
+    button {
+      margin-top: 16px;
+      padding: 8px 14px;
+      border-radius: 9999px;
+      border: none;
+      background: rgb(29,155,240);
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .status {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #4caf50;
+    }
+  </style>
+</head>
+<body>
+  <h1>Shadow Intern Settings</h1>
+
+  <section class="card">
+    <h2>License</h2>
+    <label for="licenseKey">License key</label>
+    <input id="licenseKey" type="text" placeholder="shadow-XXXX-XXXX" />
+    <div class="hint">Required for Shadow Intern access.</div>
+  </section>
+
+  <section class="card">
+    <h2>Global settings</h2>
+    <label for="maxChars">Max characters (50–500)</label>
+    <input id="maxChars" type="number" min="50" max="500" step="10" />
+    <div class="hint">Hard cap applied after generation.</div>
+
+    <label for="tone">Tone</label>
+    <select id="tone">
+      <option value="neutral">Neutral</option>
+      <option value="degen">Degen</option>
+      <option value="professional">Professional</option>
+      <option value="toxic">Toxic</option>
+    </select>
+
+    <label for="humanizeToggle" style="display:flex;align-items:center;gap:8px;">
+      <input id="humanizeToggle" type="checkbox" />
+      Humanized replies
+    </label>
+    <div class="hint">Keep replies casual + degen. Disable for neutral AI vibes.</div>
+  </section>
+
+  <section class="card">
+    <h2>Mode presets</h2>
+    <div class="hint">Toggle, rename, and customize the prompt template per mode.</div>
+    <div id="modesContainer"></div>
+  </section>
+
+  <button id="saveBtn">Save</button>
+  <div class="status" id="status"></div>
+
+  <script src="options.js"></script>
+</body>
+</html>

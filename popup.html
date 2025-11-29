@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Shadow Intern Quick Settings</title>
+  <style>
+    body {
+      width: 260px;
+      margin: 0;
+      padding: 12px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f0f10;
+      color: #f0f2f4;
+    }
+    h1 {
+      font-size: 16px;
+      margin: 0 0 12px 0;
+    }
+    .section {
+      margin-bottom: 12px;
+    }
+    .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #9aa0a6;
+      margin-bottom: 6px;
+    }
+    .length-buttons {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    button.length-btn {
+      flex: 1;
+      border-radius: 999px;
+      border: 1px solid #2f3336;
+      background: transparent;
+      color: inherit;
+      padding: 6px 0;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    button.length-btn.active {
+      background: rgba(29,155,240,0.25);
+      border-color: rgb(29,155,240);
+      color: #fff;
+    }
+    select,
+    input[type="checkbox"] {
+      width: 100%;
+      font-size: 13px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid #2f3336;
+      background: #050506;
+      color: inherit;
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+    .hint {
+      font-size: 11px;
+      color: #7a7f87;
+      margin-top: 4px;
+    }
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+    .link-button {
+      background: none;
+      border: none;
+      color: rgb(29,155,240);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Shadow Intern</h1>
+
+  <div class="section">
+    <div class="label">Reply length</div>
+    <div class="length-buttons">
+      <button class="length-btn" data-length="80">Short</button>
+      <button class="length-btn" data-length="160">Medium</button>
+      <button class="length-btn" data-length="240">Long</button>
+    </div>
+    <div class="hint" id="lengthHint"></div>
+  </div>
+
+  <div class="section">
+    <div class="label">Tone</div>
+    <select id="toneSelect">
+      <option value="neutral">Neutral</option>
+      <option value="degen">Degen</option>
+      <option value="professional">Professional</option>
+      <option value="toxic">Toxic</option>
+    </select>
+  </div>
+
+  <div class="section checkbox-row">
+    <input type="checkbox" id="humanizeToggle" />
+    <label for="humanizeToggle">Humanized replies</label>
+  </div>
+  <div class="hint">Keeps slangy, casual CT vibes. Disable for cleaner tone.</div>
+
+  <div class="actions">
+    <button class="link-button" id="openOptionsBtn">Open full settings</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
+

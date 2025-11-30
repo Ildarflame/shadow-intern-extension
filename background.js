@@ -165,6 +165,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       mode: modeId,
       tweetText: message.tweetText,
       imageUrls: message.imageUrls || [],
+      hasVideo: !!message.hasVideo,
+      videoHints: message.videoHints || [],
       settings: requestSettings,
       generalPrompt: stored.generalPrompt || "",
       persona: stored.activePersona || null

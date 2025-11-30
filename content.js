@@ -341,13 +341,22 @@ function getTweetData(fromElement) {
     }
   }
 
-  // Check for video presence (simple detection)
-  const hasVideo = !!tweetEl.querySelector('video, [data-testid="videoComponent"]');
+  // Detect video elements inside the tweet root
+  const videoElements = tweetEl.querySelectorAll(
+    'video, div[data-testid="videoPlayer"], div[data-testid="videoComponent"]'
+  );
+  const hasVideo = videoElements.length > 0;
+  
+  // Minimal "hints" instead of real URLs (we only need to know that video exists)
+  const videoHints = hasVideo
+    ? Array.from(videoElements).map((el, idx) => `video_${idx + 1}`)
+    : [];
 
   const result = {
     text: text || "",
     images: images,
-    videos: hasVideo ? ["video-detected"] : [], // Placeholder for video detection
+    hasVideo: hasVideo,
+    videoHints: videoHints,
     tweetUrl: tweetUrl || "",
     authorHandle: authorHandle || "",
     tweetId: tweetId || ""
@@ -506,6 +515,8 @@ function onModeClick(event) {
         mode,
         tweetText: tweetData.text,
         imageUrls: tweetData.images,
+        hasVideo: !!tweetData.hasVideo,
+        videoHints: tweetData.videoHints || [],
         tweetId: tweetData.tweetId,
         tweetUrl: tweetData.tweetUrl,
         authorHandle: tweetData.authorHandle

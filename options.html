@@ -118,6 +118,17 @@
       Humanized replies
     </label>
     <div class="hint">Keep replies casual + degen. Disable for neutral AI vibes.</div>
+
+    <label for="generalPrompt">General Style / Persona Prompt</label>
+    <textarea id="generalPrompt" placeholder="Example: Sarcastic crypto degen, short replies, uses CT slang, no emojis."></textarea>
+    <div class="hint">This text describes how Shadow Intern should talk in all replies (tone, slang, personality). Leave empty to use default style.</div>
+  </section>
+
+  <section class="card">
+    <h2>Custom Personas</h2>
+    <div class="hint">Create up to 3 custom personas for different reply styles. Each persona can have its own name, description, and optional settings.</div>
+    <div id="personasContainer"></div>
+    <button id="addPersonaBtn" style="margin-top: 12px;">+ Add Persona</button>
   </section>
 
   <section class="card">

@@ -75,11 +75,22 @@ function getSettings() {
         humanize: sanitizeHumanize(globalRaw.humanize)
       };
       const modes = mergeModes(data?.modes);
+      const generalPrompt = (data?.generalPrompt || "").trim();
+      
+      // Get active persona
+      const activePersonaId = data?.activePersonaId || null;
+      let activePersona = null;
+      if (activePersonaId && data?.personas) {
+        const personas = Array.isArray(data.personas) ? data.personas : [];
+        activePersona = personas.find(p => p.id === activePersonaId) || null;
+      }
 
       resolve({
         licenseKey,
         globalSettings,
-        modes
+        modes,
+        generalPrompt,
+        activePersona
       });
     });
   });
@@ -116,7 +127,9 @@ async function callShadowIntern(body, licenseKey) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || "Shadow Intern server error");
+    const error = new Error(err.error || "Shadow Intern server error");
+    error.status = res.status; // Include status code for better error handling
+    throw error;
   }
 
   return res.json();
@@ -151,8 +164,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const body = {
       mode: modeId,
       tweetText: message.tweetText,
-      imageUrls: message.imageUrls, // <-- NEW
-      settings: requestSettings
+      imageUrls: message.imageUrls || [],
+      settings: requestSettings,
+      generalPrompt: stored.generalPrompt || "",
+      persona: stored.activePersona || null
     };
 
     try {
@@ -162,8 +177,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       console.log("[ShadowIntern-BG] Response:", json);
       sendResponse({ reply: json.reply });
     } catch (err) {
-      console.error("[ShadowIntern-BG] Error:", err.message);
-      sendResponse({ error: err.message });
+      console.error("[ShadowIntern-BG] Error:", err.message, "Status:", err.status);
+      // Include status code in error response for better error handling
+      sendResponse({ error: err.message, status: err.status });
     }
   })();
 

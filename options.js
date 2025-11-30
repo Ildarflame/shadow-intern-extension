@@ -162,18 +162,125 @@ function renderModes(modes) {
   });
 }
 
+function generatePersonaId() {
+  return `persona-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
+function renderPersonas(personas) {
+  const container = document.getElementById("personasContainer");
+  container.innerHTML = "";
+
+  if (!personas || personas.length === 0) {
+    return;
+  }
+
+  personas.forEach((persona) => {
+    const card = document.createElement("div");
+    card.className = "persona-card";
+    card.dataset.personaId = persona.id;
+    card.style.cssText = `
+      border: 1px solid #2f3336;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 12px;
+      background: rgba(255, 255, 255, 0.02);
+    `;
+
+    const header = document.createElement("div");
+    header.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;";
+
+    const title = document.createElement("input");
+    title.type = "text";
+    title.value = persona.name || "";
+    title.placeholder = "Persona name";
+    title.style.cssText = `
+      flex: 1;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #2f3336;
+      background: #000;
+      color: #e7e9ea;
+      font-size: 13px;
+      font-weight: 600;
+      margin-right: 8px;
+    `;
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "Delete";
+    deleteBtn.style.cssText = `
+      padding: 4px 12px;
+      border-radius: 6px;
+      border: 1px solid #f4212e;
+      background: transparent;
+      color: #f4212e;
+      font-size: 12px;
+      cursor: pointer;
+    `;
+    deleteBtn.addEventListener("click", () => {
+      card.remove();
+    });
+
+    header.appendChild(title);
+    header.appendChild(deleteBtn);
+
+    const descLabel = document.createElement("label");
+    descLabel.textContent = "Description";
+    descLabel.style.cssText = "display: block; font-size: 13px; margin-top: 8px; margin-bottom: 4px;";
+
+    const descTextarea = document.createElement("textarea");
+    descTextarea.value = persona.description || "";
+    descTextarea.placeholder = "How this persona talks (e.g., 'Speaks like a CT degen, uses slang, short replies, casual insults.')";
+    descTextarea.style.cssText = `
+      width: 100%;
+      min-height: 60px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #2f3336;
+      background: #000;
+      color: #e7e9ea;
+      font-size: 13px;
+      resize: vertical;
+      font-family: inherit;
+    `;
+
+    card.appendChild(header);
+    card.appendChild(descLabel);
+    card.appendChild(descTextarea);
+
+    container.appendChild(card);
+  });
+}
+
+function extractPersonasFromUI() {
+  const cards = Array.from(document.querySelectorAll(".persona-card"));
+  return cards.map((card) => {
+    const id = card.dataset.personaId;
+    const nameInput = card.querySelector('input[type="text"]');
+    const descTextarea = card.querySelector("textarea");
+    return {
+      id,
+      name: (nameInput.value || "").trim(),
+      description: (descTextarea.value || "").trim()
+    };
+  }).filter(p => p.name || p.description); // Only include personas with at least name or description
+}
+
 function loadSettings() {
   chrome.storage.sync.get(null, (data) => {
     const licenseKey = data?.licenseKey || "";
     const globalSettings = normalizeGlobalSettings(data?.globalSettings);
     const modes = mergeModes(data?.modes);
+    const generalPrompt = data?.generalPrompt || "";
+    const personas = data?.personas || [];
 
     document.getElementById("licenseKey").value = licenseKey;
     document.getElementById("maxChars").value = globalSettings.maxChars;
     document.getElementById("tone").value = globalSettings.tone;
     document.getElementById("humanizeToggle").checked = !!globalSettings.humanize;
+    document.getElementById("generalPrompt").value = generalPrompt;
 
     renderModes(modes);
+    renderPersonas(personas);
   });
 }
 
@@ -208,6 +315,7 @@ function saveSettings() {
   const maxCharsInput = document.getElementById("maxChars").value;
   const tone = document.getElementById("tone").value;
   const humanize = document.getElementById("humanizeToggle").checked;
+  const generalPrompt = (document.getElementById("generalPrompt").value || "").trim();
 
   const globalSettings = {
     maxChars: sanitizeMaxChars(maxCharsInput),
@@ -216,12 +324,27 @@ function saveSettings() {
   };
 
   const modes = extractModesFromUI();
+  const personas = extractPersonasFromUI();
+
+  // Enforce max 3 personas
+  if (personas.length > 3) {
+    const status = document.getElementById("status");
+    status.textContent = "Error: Maximum 3 personas allowed";
+    status.style.color = "#f4212e";
+    setTimeout(() => {
+      status.textContent = "";
+      status.style.color = "#4caf50";
+    }, 2000);
+    return;
+  }
 
   chrome.storage.sync.set(
     {
       licenseKey,
       globalSettings,
-      modes
+      modes,
+      generalPrompt,
+      personas
     },
     () => {
       chrome.storage.sync.remove(["language", "toxicity", "length", "temperature"]);
@@ -239,4 +362,22 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("saveBtn")
     .addEventListener("click", saveSettings);
+
+  // Add persona button
+  document.getElementById("addPersonaBtn").addEventListener("click", () => {
+    chrome.storage.sync.get(['personas'], (data) => {
+      const personas = data.personas || [];
+      if (personas.length >= 3) {
+        alert("Maximum 3 personas allowed. Delete one to add a new one.");
+        return;
+      }
+      const newPersona = {
+        id: generatePersonaId(),
+        name: "",
+        description: ""
+      };
+      personas.push(newPersona);
+      renderPersonas(personas);
+    });
+  });
 });

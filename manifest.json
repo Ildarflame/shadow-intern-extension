@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Shadow Intern",
-  "version": "0.4.0",
+  "version": "1.0.0",
   "description": "Shadow Intern adds quick AI-powered reply workflows for Twitter/X",
   "permissions": [
     "scripting",

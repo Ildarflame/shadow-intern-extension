@@ -1,8 +1,18 @@
 # Shadow Intern
 
-**Version:** 0.4.0
+**Version:** 1.0.0
 
 Shadow Intern is a Chrome extension that adds AI-powered reply workflows for Twitter/X. Generate contextual replies with customizable tones, lengths, and reply modes directly from the Twitter/X composer.
+
+## What's New in v1.0
+
+- **Improved Tweet Parsing**: Unified extraction function handles timeline and modal views, extracts text, images, metadata (tweet ID, URL, author)
+- **Robust Error Handling**: User-friendly error toasts for license issues, rate limits, server errors, and client-side problems
+- **Request Caching**: In-memory cache prevents duplicate requests for the same tweet/mode/persona combination
+- **General Prompt**: Global style/persona field that applies to all replies
+- **Custom Personas**: Create up to 3 custom personas with unique names and descriptions for different reply styles
+- **Multi-Language Support**: Automatically detects and replies in the same language as the original tweet
+- **Reply History**: View last 10 generated replies in the popup with copy functionality
 
 ## Features
 
@@ -23,6 +33,10 @@ Shadow Intern is a Chrome extension that adds AI-powered reply workflows for Twi
 - **Humanized Replies**: Toggle casual, slangy CT vibes on/off
 - **Custom Mode Presets**: Enable/disable, rename, and customize prompt templates for each mode
 - **Image Support**: Automatically extracts and includes images from tweets in reply generation
+- **General Prompt**: Set a global style/persona that applies to all replies (e.g., "Sarcastic crypto degen, short replies, uses CT slang")
+- **Custom Personas**: Create up to 3 named personas with custom descriptions for different reply styles
+- **Multi-Language**: Automatically replies in the same language as the original tweet
+- **Reply History**: View and copy your last 10 generated replies
 
 ### 🎨 User Interface
 - **Quick Settings Popup**: Fast access to common settings via extension icon
@@ -49,6 +63,8 @@ Shadow Intern is a Chrome extension that adds AI-powered reply workflows for Twi
 - Adjust reply length (Short/Medium/Long)
 - Change tone (Neutral/Degen/Professional/Toxic)
 - Toggle humanized replies
+- Select active persona (or use default)
+- View recent reply history with copy functionality
 - Open full settings page
 
 ### Full Settings (Options Page)
@@ -62,6 +78,10 @@ Configure:
   - Max characters (50-500)
   - Default tone
   - Humanized replies toggle
+  - General Style / Persona Prompt (applies to all replies)
+- **Custom Personas**: Create up to 3 custom personas:
+  - Name and description
+  - Each persona defines a unique reply style
 - **Mode Presets**: Customize each reply mode:
   - Enable/disable modes
   - Rename mode labels
@@ -146,6 +166,16 @@ No build process required. The extension runs directly from source files.
 - The extension automatically filters out avatars and emojis
 - Only media images from tweets are included
 - Check browser console for extraction logs
+
+### Caching
+- Replies are cached in-memory for the current page session
+- Same tweet + mode + persona combination will use cached reply
+- Refresh the page to clear cache
+
+### Multi-Language
+- The extension automatically detects the language of the original tweet
+- Replies are generated in the same language
+- Works for English, Russian, and other languages supported by the AI model
 
 ## License
 

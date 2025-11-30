@@ -206,137 +206,41 @@ function findOriginalTweetInDialog(dialogEl) {
   return originalTweet;
 }
 
-function extractImagesFromTweetEl(tweetEl) {
-  if (!tweetEl) return [];
-  
-  log('[ShadowIntern] Extracting images from tweet element...');
-  
-  // Direct query for all twimg.com images (most reliable)
-  let imageEls = Array.from(
-    tweetEl.querySelectorAll('img[src*="twimg.com"], img[src*="pbs.twimg.com"]')
-  );
-  
-  log(`[ShadowIntern] Found ${imageEls.length} potential images before filtering`);
-  
-  // Filter out avatars, emojis, badges, and other non-media images
-  imageEls = imageEls.filter((img) => {
-    const src = img.src || "";
-    const width = img.naturalWidth || img.width || 0;
-    const height = img.naturalHeight || img.height || 0;
+// --------------- UNIFIED TWEET DATA EXTRACTION --------------------
 
-    // Size filtering - ignore very small images (likely avatars/emojis)
-    if (width > 0 && height > 0 && (width < 40 || height < 40)) {
-      return false;
-    }
-
-    // Avatar filtering
-    if (src.includes("profile_images")) return false;
-    if (src.includes("_normal")) return false;
-    if (src.includes("_bigger")) return false;
-    if (src.includes("_400x400")) return false;
-    if (src.includes("_200x200")) return false;
-
-    // Profile banners
-    if (src.includes("profile_banners")) return false;
-
-    // Emojis inside tweet text
-    if (img.closest('[data-testid="tweetText"]')) return false;
-
-    // UI icons / badges
-    if (src.includes("emoji")) return false;
-    if (src.includes("verification")) return false;
-    if (src.includes("badge")) return false;
-    
-    // Check for aria-hidden (often used for decorative images)
-    // But allow media images even if aria-hidden
-    if (img.getAttribute("aria-hidden") === "true") {
-      // Only exclude if it's clearly not a media image
-      if (!src.includes("/media/") && !src.includes("twimg.com")) {
-        return false;
-      }
-    }
-
-    return true;
-  });
-  
-  const urls = imageEls.map(img => img.src);
-  log(`[ShadowIntern] Extracted ${urls.length} media images:`, urls);
-  
-  return urls;
-}
-
-// --------------- EXTRACT IMAGES (MEDIA ONLY, NO AVATAR) --------------------
-
-function extractTweetImagesFromButton(button) {
-  // Check if we're in a reply modal
-  const dialog = findReplyDialogRoot(button);
-  let tweetEl = null;
-  let isModal = false;
-  
-  if (dialog) {
-    // We're in a reply modal - find the original tweet being replied to
-    isModal = true;
-    tweetEl = findOriginalTweetInDialog(dialog);
-    
-    if (tweetEl) {
-      const images = extractImagesFromTweetEl(tweetEl);
-      log('[ShadowIntern] Extracting images from reply modal:', images);
-      return images;
-    } else {
-      console.warn('[ShadowIntern] Reply modal detected but original tweet not found');
-    }
-  }
-  
-  // If not in modal or didn't find tweet in modal, use existing timeline logic
-  if (!tweetEl) {
-    tweetEl = button.closest("article");
-
-    if (!tweetEl) {
-      const articles = Array.from(document.querySelectorAll("article"));
-      const btnRect = button.getBoundingClientRect();
-
-      let best = null;
-      for (const a of articles) {
-        const r = a.getBoundingClientRect();
-        if (r.bottom <= btnRect.top) {
-          if (!best || r.bottom > best.rect.bottom) {
-            best = { node: a, rect: r };
-          }
-        }
-      }
-
-      if (best) tweetEl = best.node;
-    }
-    
-    if (tweetEl) {
-      const images = extractImagesFromTweetEl(tweetEl);
-      log('[ShadowIntern] Extracting images from timeline tweet:', images);
-      return images;
-    }
+/**
+ * Extracts all tweet data (text, images, metadata) from a button element.
+ * Handles both timeline tweets and modal views.
+ * @param {HTMLElement} fromElement - The button or element that triggered the extraction
+ * @returns {Object|null} Tweet data object or null if extraction fails
+ */
+function getTweetData(fromElement) {
+  if (!fromElement) {
+    log('[ShadowIntern] getTweetData: fromElement is null');
+    return null;
   }
 
-  return [];
-}
-
-// --------------- EXTRACT TEXT --------------------
-
-function extractTweetTextFromButton(button) {
   // Check if we're in a reply modal
-  const dialog = findReplyDialogRoot(button);
+  const dialog = findReplyDialogRoot(fromElement);
   let tweetEl = null;
   
   if (dialog) {
     // We're in a reply modal - find the original tweet being replied to
     tweetEl = findOriginalTweetInDialog(dialog);
+    if (!tweetEl) {
+      log('[ShadowIntern] Reply modal detected but original tweet not found');
+      return null;
+    }
   }
   
-  // If not in modal or didn't find tweet in modal, use existing timeline logic
+  // If not in modal or didn't find tweet in modal, use timeline logic
   if (!tweetEl) {
-    tweetEl = button.closest("article");
+    tweetEl = fromElement.closest("article");
 
     if (!tweetEl) {
+      // Fallback: find nearest article above the button
       const articles = Array.from(document.querySelectorAll("article"));
-      const btnRect = button.getBoundingClientRect();
+      const btnRect = fromElement.getBoundingClientRect();
 
       let best = null;
       for (const a of articles) {
@@ -352,22 +256,210 @@ function extractTweetTextFromButton(button) {
     }
   }
 
-  if (!tweetEl) return "";
+  if (!tweetEl) {
+    log('[ShadowIntern] getTweetData: Could not find tweet article element');
+    return null;
+  }
 
-  const nodes = tweetEl.querySelectorAll('div[data-testid="tweetText"]');
-
+  // Extract text content
+  const textNodes = tweetEl.querySelectorAll('div[data-testid="tweetText"]');
   let text = "";
-  nodes.forEach((node) => {
+  textNodes.forEach((node) => {
     const t = node.innerText || node.textContent || "";
     if (t.trim()) text += t.trim() + "\n";
   });
-
   text = text.trim();
-  log("Extracted text:", text);
 
-  // Note: We intentionally keep pic.twitter.com links in the text
-  // as a fallback hint for the backend if image extraction fails
-  return text;
+  // Extract images (media only, no avatars)
+  const imageEls = Array.from(
+    tweetEl.querySelectorAll('img[src*="twimg.com"], img[src*="pbs.twimg.com"]')
+  );
+  
+  const images = imageEls
+    .filter((img) => {
+      const src = img.src || "";
+      const width = img.naturalWidth || img.width || 0;
+      const height = img.naturalHeight || img.height || 0;
+
+      // Size filtering - ignore very small images (likely avatars/emojis)
+      if (width > 0 && height > 0 && (width < 40 || height < 40)) {
+        return false;
+      }
+
+      // Avatar filtering
+      if (src.includes("profile_images")) return false;
+      if (src.includes("_normal")) return false;
+      if (src.includes("_bigger")) return false;
+      if (src.includes("_400x400")) return false;
+      if (src.includes("_200x200")) return false;
+      if (src.includes("profile_banners")) return false;
+
+      // Emojis inside tweet text
+      if (img.closest('[data-testid="tweetText"]')) return false;
+
+      // UI icons / badges
+      if (src.includes("emoji")) return false;
+      if (src.includes("verification")) return false;
+      if (src.includes("badge")) return false;
+      
+      // Check for aria-hidden (often used for decorative images)
+      if (img.getAttribute("aria-hidden") === "true") {
+        if (!src.includes("/media/") && !src.includes("twimg.com")) {
+          return false;
+        }
+      }
+
+      return true;
+    })
+    .map(img => img.src);
+
+  // Extract tweet URL and ID
+  let tweetUrl = null;
+  let tweetId = null;
+  let authorHandle = null;
+
+  // Try to find tweet link
+  const tweetLink = tweetEl.querySelector('a[href*="/status/"]');
+  if (tweetLink) {
+    const href = tweetLink.getAttribute("href");
+    if (href) {
+      tweetUrl = href.startsWith("http") ? href : `https://x.com${href}`;
+      // Extract tweet ID from URL
+      const match = href.match(/\/status\/(\d+)/);
+      if (match) {
+        tweetId = match[1];
+      }
+    }
+  }
+
+  // Try to extract author handle
+  const authorLink = tweetEl.querySelector('a[href^="/"]');
+  if (authorLink) {
+    const href = authorLink.getAttribute("href");
+    if (href && !href.includes("/status/")) {
+      authorHandle = `@${href.replace(/^\//, "").split("/")[0]}`;
+    }
+  }
+
+  // Check for video presence (simple detection)
+  const hasVideo = !!tweetEl.querySelector('video, [data-testid="videoComponent"]');
+
+  const result = {
+    text: text || "",
+    images: images,
+    videos: hasVideo ? ["video-detected"] : [], // Placeholder for video detection
+    tweetUrl: tweetUrl || "",
+    authorHandle: authorHandle || "",
+    tweetId: tweetId || ""
+  };
+
+  log('[ShadowIntern] getTweetData result:', result);
+  return result;
+}
+
+// --------------- ERROR HANDLING & UX --------------------
+
+let errorToastElement = null;
+
+function showShadowError(message) {
+  if (!message) return;
+  
+  // Remove existing toast if present
+  if (errorToastElement) {
+    errorToastElement.remove();
+  }
+
+  const toast = document.createElement("div");
+  toast.className = "shadow-intern-toast shadow-intern-error";
+  toast.textContent = message;
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #f4212e;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: system-ui, -apple-system, sans-serif;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    max-width: 400px;
+    text-align: center;
+  `;
+
+  document.body.appendChild(toast);
+  errorToastElement = toast;
+
+  // Auto-hide after 5 seconds
+  setTimeout(() => {
+    if (toast.parentNode) {
+      toast.style.opacity = "0";
+      toast.style.transition = "opacity 0.3s";
+      setTimeout(() => toast.remove(), 300);
+    }
+  }, 5000);
+}
+
+function showShadowSuccess(message) {
+  if (!message) return;
+  
+  // Remove existing toast if present
+  if (errorToastElement) {
+    errorToastElement.remove();
+  }
+
+  const toast = document.createElement("div");
+  toast.className = "shadow-intern-toast shadow-intern-success";
+  toast.textContent = message;
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #00ba7c;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: system-ui, -apple-system, sans-serif;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    max-width: 400px;
+    text-align: center;
+  `;
+
+  document.body.appendChild(toast);
+  errorToastElement = toast;
+
+  // Auto-hide after 3 seconds
+  setTimeout(() => {
+    if (toast.parentNode) {
+      toast.style.opacity = "0";
+      toast.style.transition = "opacity 0.3s";
+      setTimeout(() => toast.remove(), 300);
+    }
+  }, 3000);
+}
+
+// --------------- REQUEST CACHING --------------------
+
+// In-memory cache for current page lifetime
+const replyCache = new Map();
+
+function getCacheKey(tweetId, mode, personaId) {
+  return `${tweetId || 'no-id'}::${mode}::${personaId || 'default'}`;
+}
+
+function getCachedReply(tweetId, mode, personaId) {
+  const key = getCacheKey(tweetId, mode, personaId);
+  return replyCache.get(key) || null;
+}
+
+function setCachedReply(tweetId, mode, personaId, reply) {
+  const key = getCacheKey(tweetId, mode, personaId);
+  replyCache.set(key, reply);
 }
 
 // --------------- BUTTON CLICK --------------------
@@ -375,31 +467,126 @@ function extractTweetTextFromButton(button) {
 function onModeClick(event) {
   const mode = event.currentTarget.dataset.mode;
 
-  const tweetText = extractTweetTextFromButton(event.currentTarget);
-  const imageUrls = extractTweetImagesFromButton(event.currentTarget);
+  // Extract tweet data using unified function
+  const tweetData = getTweetData(event.currentTarget);
   
-  // Fallback logging if no images found but text contains pic.twitter.com
-  if (imageUrls.length === 0 && (tweetText.includes('pic.twitter.com') || tweetText.includes('pic.x.com'))) {
-    console.log('[ShadowIntern] No images found in DOM but tweet text contains pic.twitter.com link');
+  if (!tweetData) {
+    showShadowError("Could not find tweet. Please try clicking the button again.");
+    return;
   }
-  
-  log('[ShadowIntern] Sending request with', imageUrls.length, 'images');
 
-  chrome.runtime.sendMessage(
-    {
-      type: "GENERATE_REPLY",
-      mode,
-      tweetText,
-      imageUrls
-    },
-    (res) => {
-      if (!res || !res.reply) {
-        log("No reply received from background");
-        return;
-      }
-      insertTextIntoActiveTextbox(res.reply);
+  if (!tweetData.text && tweetData.images.length === 0) {
+    showShadowError("Tweet has no text or images to reply to.");
+    return;
+  }
+
+  // Get active persona ID from storage (will be implemented in persona feature)
+  chrome.storage.sync.get(['activePersonaId'], (data) => {
+    const personaId = data.activePersonaId || null;
+
+    // Check cache first
+    const cachedReply = getCachedReply(tweetData.tweetId, mode, personaId);
+    if (cachedReply) {
+      log('[ShadowIntern] Using cached reply');
+      showShadowSuccess("Used cached reply");
+      insertTextIntoActiveTextbox(cachedReply);
+      return;
     }
-  );
+
+    // Fallback logging if no images found but text contains pic.twitter.com
+    if (tweetData.images.length === 0 && (tweetData.text.includes('pic.twitter.com') || tweetData.text.includes('pic.x.com'))) {
+      log('[ShadowIntern] No images found in DOM but tweet text contains pic.twitter.com link');
+    }
+    
+    log('[ShadowIntern] Sending request with', tweetData.images.length, 'images');
+
+    chrome.runtime.sendMessage(
+      {
+        type: "GENERATE_REPLY",
+        mode,
+        tweetText: tweetData.text,
+        imageUrls: tweetData.images,
+        tweetId: tweetData.tweetId,
+        tweetUrl: tweetData.tweetUrl,
+        authorHandle: tweetData.authorHandle
+      },
+      (res) => {
+        if (chrome.runtime.lastError) {
+          log("Runtime error:", chrome.runtime.lastError.message);
+          showShadowError("Extension error. Please try again.");
+          return;
+        }
+
+        if (!res) {
+          log("No response from background");
+          showShadowError("No response from server. Please check your connection.");
+          return;
+        }
+
+        if (res.error) {
+          log("Error from background:", res.error);
+          // Map error messages to user-friendly text
+          let errorMsg = res.error;
+          if (res.error.includes("license") || res.error.includes("License")) {
+            errorMsg = "License invalid or expired. Check your key in Shadow Intern settings.";
+          } else if (res.error.includes("limit") || res.error.includes("Limit")) {
+            errorMsg = "Daily limit reached. Try again later.";
+          } else if (res.error.includes("server") || res.error.includes("Server")) {
+            errorMsg = "Server error. Please try again.";
+          }
+          showShadowError(errorMsg);
+          return;
+        }
+
+        if (!res.reply) {
+          log("No reply in response");
+          showShadowError("No reply generated. Please try again.");
+          return;
+        }
+
+        // Cache the reply
+        setCachedReply(tweetData.tweetId, mode, personaId, res.reply);
+
+        // Store in history (will be implemented in history feature)
+        storeReplyInHistory({
+          tweetUrl: tweetData.tweetUrl,
+          mode: mode,
+          replyText: res.reply
+        });
+
+        insertTextIntoActiveTextbox(res.reply);
+      }
+    );
+  });
+}
+
+// --------------- REPLY HISTORY --------------------
+
+function storeReplyInHistory(item) {
+  chrome.storage.sync.get(['activePersonaId', 'personas'], (data) => {
+    let personaName = null;
+    if (data.activePersonaId && data.personas) {
+      const personas = Array.isArray(data.personas) ? data.personas : [];
+      const persona = personas.find(p => p.id === data.activePersonaId);
+      if (persona) {
+        personaName = persona.name;
+      }
+    }
+
+    chrome.storage.local.get(['replyHistory'], (localData) => {
+      const history = localData.replyHistory || [];
+      const newItem = {
+        id: Date.now().toString(),
+        timestamp: Date.now(),
+        personaName: personaName,
+        ...item
+      };
+      history.unshift(newItem);
+      // Keep only last 10
+      const trimmed = history.slice(0, 10);
+      chrome.storage.local.set({ replyHistory: trimmed });
+    });
+  });
 }
 
 // --------------- INSERT REPLY --------------------

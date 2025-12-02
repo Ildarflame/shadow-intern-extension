@@ -48,6 +48,95 @@ function highlightLengthButton(maxChars) {
   });
 }
 
+// Tab Management
+let activeTab = "reply";
+
+function switchTab(tabName) {
+  activeTab = tabName;
+  
+  // Update tab buttons
+  document.querySelectorAll(".tab").forEach((tab) => {
+    tab.classList.toggle("active", tab.dataset.tab === tabName);
+  });
+  
+  // Update tab content
+  document.querySelectorAll(".tab-content").forEach((content) => {
+    content.classList.toggle("active", content.id === `${tabName}Tab`);
+  });
+  
+  // Load data for the active tab
+  if (tabName === "personas") {
+    loadPersonasTab();
+  } else if (tabName === "history") {
+    loadHistory();
+  }
+}
+
+// License Badge
+function updateLicenseBadge() {
+  chrome.storage.sync.get(['licenseKey'], (data) => {
+    const badge = document.getElementById("licenseBadge");
+    if (data.licenseKey && data.licenseKey.trim()) {
+      // For now, just show ACTIVE if license key exists
+      // In a full implementation, you'd validate it
+      badge.textContent = "LICENSE: ACTIVE";
+      badge.classList.add("active");
+    } else {
+      badge.textContent = "LICENSE: UNKNOWN";
+      badge.classList.remove("active");
+    }
+  });
+}
+
+// Personas Tab
+function loadPersonasTab() {
+  chrome.storage.sync.get(['personas', 'activePersonaId'], (data) => {
+    const personas = data.personas || [];
+    const activePersonaId = data.activePersonaId || null;
+    const container = document.getElementById("personasContainer");
+    container.innerHTML = "";
+
+    if (personas.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          No personas yet.<br>
+          Create your first persona in Settings.
+        </div>
+      `;
+      return;
+    }
+
+    personas.forEach((persona) => {
+      const card = document.createElement("div");
+      card.className = "persona-card";
+      if (persona.id === activePersonaId) {
+        card.classList.add("active");
+      }
+
+      const name = document.createElement("div");
+      name.className = "persona-name";
+      name.textContent = persona.name || `Persona ${persona.id.slice(-4)}`;
+
+      const desc = document.createElement("div");
+      desc.className = "persona-desc";
+      desc.textContent = persona.description || "No description";
+
+      card.appendChild(name);
+      card.appendChild(desc);
+
+      if (persona.id === activePersonaId) {
+        const badge = document.createElement("span");
+        badge.className = "persona-badge";
+        badge.textContent = "ACTIVE";
+        card.appendChild(badge);
+      }
+
+      container.appendChild(card);
+    });
+  });
+}
+
+// Persona Select (for Reply tab)
 function loadPersonas() {
   chrome.storage.sync.get(['personas', 'activePersonaId'], (data) => {
     const personas = data.personas || [];
@@ -69,6 +158,7 @@ function loadPersonas() {
   });
 }
 
+// History Tab
 function loadHistory() {
   chrome.storage.local.get(['replyHistory'], (data) => {
     const history = data.replyHistory || [];
@@ -76,22 +166,24 @@ function loadHistory() {
     container.innerHTML = "";
 
     if (history.length === 0) {
-      container.innerHTML = '<div style="font-size: 11px; color: #7a7f87; padding: 8px;">No recent replies</div>';
+      container.innerHTML = `
+        <div class="empty-state">
+          No replies yet.<br>
+          Generate some replies on Twitter to see them here.
+        </div>
+      `;
       return;
     }
 
-    history.forEach((item) => {
+    // Show up to 10 items
+    const itemsToShow = history.slice(0, 10);
+
+    itemsToShow.forEach((item) => {
       const itemDiv = document.createElement("div");
-      itemDiv.style.cssText = `
-        border: 1px solid #2f3336;
-        border-radius: 8px;
-        padding: 8px;
-        margin-bottom: 8px;
-        background: rgba(255, 255, 255, 0.02);
-      `;
+      itemDiv.className = "history-item";
 
       const header = document.createElement("div");
-      header.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 11px; color: #8b98a5;";
+      header.className = "history-header";
 
       const left = document.createElement("div");
       left.textContent = `${item.mode || 'unknown'}${item.personaName ? ` • ${item.personaName}` : ''}`;
@@ -104,29 +196,23 @@ function loadHistory() {
       header.appendChild(time);
 
       const text = document.createElement("div");
+      text.className = "history-text";
       text.textContent = item.replyText || "";
-      text.style.cssText = "font-size: 12px; color: #e7e9ea; margin-bottom: 6px; max-height: 60px; overflow: hidden; text-overflow: ellipsis;";
 
       const actions = document.createElement("div");
-      actions.style.cssText = "display: flex; gap: 8px;";
+      actions.className = "history-actions";
 
       const copyBtn = document.createElement("button");
+      copyBtn.className = "copy-btn";
       copyBtn.textContent = "Copy";
-      copyBtn.style.cssText = `
-        padding: 4px 8px;
-        border-radius: 6px;
-        border: 1px solid #2f3336;
-        background: transparent;
-        color: rgb(29,155,240);
-        font-size: 11px;
-        cursor: pointer;
-      `;
       copyBtn.addEventListener("click", () => {
         navigator.clipboard.writeText(item.replyText || "").then(() => {
           copyBtn.textContent = "Copied!";
+          copyBtn.classList.add("copied");
           setTimeout(() => {
             copyBtn.textContent = "Copy";
-          }, 1000);
+            copyBtn.classList.remove("copied");
+          }, 2000);
         });
       });
 
@@ -142,12 +228,23 @@ function loadHistory() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Tab switching
+  document.querySelectorAll(".tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      switchTab(tab.dataset.tab);
+    });
+  });
+
+  // License badge
+  updateLicenseBadge();
+
+  // Reply tab controls
   const toneSelect = document.getElementById("toneSelect");
   const humanizeToggle = document.getElementById("humanizeToggle");
   const lengthButtons = document.querySelectorAll(".length-btn");
-  const openOptionsBtn = document.getElementById("openOptionsBtn");
   const personaSelect = document.getElementById("personaSelect");
 
+  // Load initial settings
   chrome.storage.sync.get(null, (data) => {
     const globalSettings = normalizeGlobalSettings(data?.globalSettings);
     highlightLengthButton(globalSettings.maxChars);
@@ -159,16 +256,25 @@ document.addEventListener("DOMContentLoaded", () => {
   loadPersonas();
   loadHistory();
 
-  // Refresh history when popup opens
+  // Listen for storage changes
   chrome.storage.onChanged.addListener((changes) => {
     if (changes.replyHistory) {
-      loadHistory();
+      if (activeTab === "history") {
+        loadHistory();
+      }
     }
     if (changes.personas || changes.activePersonaId) {
       loadPersonas();
+      if (activeTab === "personas") {
+        loadPersonasTab();
+      }
+    }
+    if (changes.licenseKey) {
+      updateLicenseBadge();
     }
   });
 
+  // Length buttons
   lengthButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
       const selected = Number(btn.dataset.length);
@@ -182,6 +288,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // Tone select
   toneSelect.addEventListener("change", () => {
     const tone = toneSelect.value;
     chrome.storage.sync.get("globalSettings", (data) => {
@@ -190,6 +297,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // Humanize toggle
   humanizeToggle.addEventListener("change", () => {
     const humanize = humanizeToggle.checked;
     chrome.storage.sync.get("globalSettings", (data) => {
@@ -198,17 +306,30 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // Persona select
   personaSelect.addEventListener("change", () => {
     const personaId = personaSelect.value || null;
-    chrome.storage.sync.set({ activePersonaId: personaId });
+    chrome.storage.sync.set({ activePersonaId: personaId }, () => {
+      // Refresh personas tab if it's active
+      if (activeTab === "personas") {
+        loadPersonasTab();
+      }
+    });
   });
 
-  openOptionsBtn.addEventListener("click", () => {
-    if (chrome.runtime.openOptionsPage) {
-      chrome.runtime.openOptionsPage();
-    } else {
-      window.open(chrome.runtime.getURL("options.html"));
+  // Open options buttons
+  const openOptionsBtn = document.getElementById("openOptionsBtn");
+  const openOptionsFromPersonas = document.getElementById("openOptionsFromPersonas");
+  
+  [openOptionsBtn, openOptionsFromPersonas].forEach((btn) => {
+    if (btn) {
+      btn.addEventListener("click", () => {
+        if (chrome.runtime.openOptionsPage) {
+          chrome.runtime.openOptionsPage();
+        } else {
+          window.open(chrome.runtime.getURL("options.html"));
+        }
+      });
     }
   });
 });
-

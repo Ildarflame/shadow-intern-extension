@@ -1,8 +1,16 @@
 # Shadow Intern
 
-**Version:** 1.0.0
+**Version:** 1.1.0
 
 Shadow Intern is a Chrome extension that adds AI-powered reply workflows for Twitter/X. Generate contextual replies with customizable tones, lengths, and reply modes directly from the Twitter/X composer.
+
+## What's New in v1.1
+
+- **UI Refresh**: Complete redesign of popup, options page, and in-tweet buttons
+  - **New Popup Design**: Tabbed interface with Reply, Personas, and History tabs
+  - **Settings Dashboard**: Reorganized options page with clear sections and improved visual hierarchy
+  - **Native Button Styling**: In-tweet reply buttons now match Twitter/X's native design with emojis and improved hover states
+  - **Dark Theme**: Consistent dark theme throughout all UI components
 
 ## What's New in v1.0
 
@@ -39,9 +47,10 @@ Shadow Intern is a Chrome extension that adds AI-powered reply workflows for Twi
 - **Reply History**: View and copy your last 10 generated replies
 
 ### 🎨 User Interface
-- **Quick Settings Popup**: Fast access to common settings via extension icon
-- **Full Options Page**: Comprehensive settings management
-- **Seamless Integration**: Reply buttons appear directly in Twitter/X composer
+- **Quick Settings Popup**: Tabbed interface with Reply, Personas, and History tabs for quick access to common settings
+- **Full Options Page**: Comprehensive settings dashboard with organized sections
+- **Seamless Integration**: Native-styled reply buttons appear directly in Twitter/X composer with emoji icons
+- **Dark Theme**: Consistent dark theme that matches Twitter/X's visual style
 
 ## Installation
 

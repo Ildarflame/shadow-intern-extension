@@ -4,131 +4,397 @@
   <meta charset="utf-8">
   <title>Shadow Intern Quick Settings</title>
   <style>
+    :root {
+      --bg: #0f0f10;
+      --bg-card: #16181c;
+      --fg: #f0f2f4;
+      --fg-muted: #9aa0a6;
+      --fg-dim: #7a7f87;
+      --border: #2f3336;
+      --accent: rgb(29,155,240);
+      --accent-hover: rgba(29,155,240,0.2);
+      --success: #00ba7c;
+      --error: #f4212e;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      width: 260px;
+      width: 320px;
       margin: 0;
-      padding: 12px;
+      padding: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #0f0f10;
-      color: #f0f2f4;
+      background: var(--bg);
+      color: var(--fg);
     }
-    h1 {
-      font-size: 16px;
-      margin: 0 0 12px 0;
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
     }
+
+    /* Header */
+    .header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-card);
+    }
+
+    .header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0;
+      color: var(--fg);
+    }
+
+    .license-badge {
+      font-size: 10px;
+      padding: 4px 8px;
+      border-radius: 12px;
+      background: var(--border);
+      color: var(--fg-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .license-badge.active {
+      background: rgba(0, 186, 124, 0.2);
+      color: var(--success);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px 8px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--fg-muted);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab:hover {
+      color: var(--fg);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* Tab Content */
+    .tab-content {
+      display: none;
+      padding: 16px;
+      overflow-y: auto;
+      max-height: 500px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Sections */
     .section {
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
+
+    .section:last-child {
+      margin-bottom: 0;
+    }
+
     .label {
-      font-size: 12px;
+      font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.04em;
-      color: #9aa0a6;
-      margin-bottom: 6px;
+      color: var(--fg-muted);
+      margin-bottom: 8px;
+      display: block;
     }
+
+    /* Length Buttons */
     .length-buttons {
       display: flex;
       gap: 6px;
-      flex-wrap: wrap;
     }
+
     button.length-btn {
       flex: 1;
-      border-radius: 999px;
-      border: 1px solid #2f3336;
+      border-radius: 20px;
+      border: 1px solid var(--border);
       background: transparent;
-      color: inherit;
-      padding: 6px 0;
+      color: var(--fg);
+      padding: 8px 0;
       font-size: 12px;
       cursor: pointer;
+      transition: all 0.2s;
     }
+
+    button.length-btn:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent);
+    }
+
     button.length-btn.active {
       background: rgba(29,155,240,0.25);
-      border-color: rgb(29,155,240);
+      border-color: var(--accent);
       color: #fff;
     }
+
+    /* Form Controls */
     select,
-    input[type="checkbox"] {
+    input[type="text"] {
       width: 100%;
       font-size: 13px;
-      padding: 6px 8px;
+      padding: 8px 12px;
       border-radius: 8px;
-      border: 1px solid #2f3336;
-      background: #050506;
-      color: inherit;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--fg);
+      transition: border-color 0.2s;
     }
+
+    select:focus,
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Checkbox */
     .checkbox-row {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       font-size: 13px;
+      padding: 8px 0;
     }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--accent);
+    }
+
+    /* Hints */
     .hint {
       font-size: 11px;
-      color: #7a7f87;
-      margin-top: 4px;
+      color: var(--fg-dim);
+      margin-top: 6px;
+      line-height: 1.4;
     }
-    .actions {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 8px;
-    }
+
+    /* Link Button */
     .link-button {
       background: none;
       border: none;
-      color: rgb(29,155,240);
+      color: var(--accent);
       font-size: 12px;
       cursor: pointer;
       padding: 0;
+      text-decoration: underline;
+      transition: opacity 0.2s;
+    }
+
+    .link-button:hover {
+      opacity: 0.8;
+    }
+
+    /* Personas Tab */
+    .persona-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      background: var(--bg-card);
+    }
+
+    .persona-card.active {
+      border-color: var(--accent);
+      background: rgba(29,155,240,0.1);
+    }
+
+    .persona-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--fg);
+      margin-bottom: 4px;
+    }
+
+    .persona-desc {
+      font-size: 12px;
+      color: var(--fg-muted);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .persona-badge {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--accent);
+      color: #fff;
+      margin-top: 6px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--fg-dim);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    /* History Tab */
+    .history-item {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      background: var(--bg-card);
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 11px;
+      color: var(--fg-muted);
+    }
+
+    .history-text {
+      font-size: 12px;
+      color: var(--fg);
+      margin-bottom: 8px;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .history-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .copy-btn {
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--accent);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent);
+    }
+
+    .copy-btn.copied {
+      background: var(--success);
+      border-color: var(--success);
+      color: #fff;
     }
   </style>
 </head>
 <body>
-  <h1>Shadow Intern</h1>
-
-  <div class="section">
-    <div class="label">Reply length</div>
-    <div class="length-buttons">
-      <button class="length-btn" data-length="80">Short</button>
-      <button class="length-btn" data-length="160">Medium</button>
-      <button class="length-btn" data-length="240">Long</button>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>Shadow Intern</h1>
+      <div class="license-badge" id="licenseBadge">LICENSE: UNKNOWN</div>
     </div>
-    <div class="hint" id="lengthHint"></div>
-  </div>
 
-  <div class="section">
-    <div class="label">Tone</div>
-    <select id="toneSelect">
-      <option value="neutral">Neutral</option>
-      <option value="degen">Degen</option>
-      <option value="professional">Professional</option>
-      <option value="toxic">Toxic</option>
-    </select>
-  </div>
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="reply">Reply</button>
+      <button class="tab" data-tab="personas">Personas</button>
+      <button class="tab" data-tab="history">History</button>
+    </div>
 
-  <div class="section checkbox-row">
-    <input type="checkbox" id="humanizeToggle" />
-    <label for="humanizeToggle">Humanized replies</label>
-  </div>
-  <div class="hint">Keeps slangy, casual CT vibes. Disable for cleaner tone.</div>
+    <!-- Reply Tab -->
+    <div class="tab-content active" id="replyTab">
+      <div class="section">
+        <label class="label">Active Persona</label>
+        <select id="personaSelect">
+          <option value="">No persona (default)</option>
+        </select>
+        <div class="hint">Select a custom persona for reply style</div>
+      </div>
 
-  <div class="section">
-    <div class="label">Active Persona</div>
-    <select id="personaSelect" style="width: 100%; font-size: 13px; padding: 6px 8px; border-radius: 8px; border: 1px solid #2f3336; background: #050506; color: inherit;">
-      <option value="">No persona (default)</option>
-    </select>
-    <div class="hint">Select a custom persona for reply style</div>
-  </div>
+      <div class="section">
+        <label class="label">Tone</label>
+        <select id="toneSelect">
+          <option value="neutral">Neutral</option>
+          <option value="degen">Degen</option>
+          <option value="professional">Professional</option>
+          <option value="toxic">Toxic</option>
+        </select>
+      </div>
 
-  <div class="section">
-    <div class="label">Recent Replies</div>
-    <div id="historyContainer" style="max-height: 200px; overflow-y: auto; margin-top: 8px;"></div>
-  </div>
+      <div class="section">
+        <label class="label">Reply Length</label>
+        <div class="length-buttons">
+          <button class="length-btn" data-length="80">Short</button>
+          <button class="length-btn" data-length="160">Medium</button>
+          <button class="length-btn" data-length="240">Long</button>
+        </div>
+        <div class="hint" id="lengthHint"></div>
+      </div>
 
-  <div class="actions">
-    <button class="link-button" id="openOptionsBtn">Open full settings</button>
+      <div class="section checkbox-row">
+        <input type="checkbox" id="humanizeToggle" />
+        <label for="humanizeToggle">Humanized replies</label>
+      </div>
+      <div class="hint">Keeps slangy, casual CT vibes. Disable for cleaner tone.</div>
+
+      <div class="section" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+        <button class="link-button" id="openOptionsBtn">Open full settings →</button>
+      </div>
+    </div>
+
+    <!-- Personas Tab -->
+    <div class="tab-content" id="personasTab">
+      <div id="personasContainer"></div>
+      <div class="hint" style="margin-top: 16px; text-align: center;">
+        To edit or add personas, use the full settings page.
+      </div>
+      <div style="text-align: center; margin-top: 12px;">
+        <button class="link-button" id="openOptionsFromPersonas">Manage personas in Settings →</button>
+      </div>
+    </div>
+
+    <!-- History Tab -->
+    <div class="tab-content" id="historyTab">
+      <div id="historyContainer"></div>
+    </div>
   </div>
 
   <script src="popup.js"></script>
 </body>
 </html>
-

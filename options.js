@@ -127,6 +127,7 @@ function renderModes(modes) {
     });
 
     const title = document.createElement("span");
+    title.className = "mode-title";
     title.textContent = config.label;
 
     const labelLabel = document.createElement("label");
@@ -148,6 +149,7 @@ function renderModes(modes) {
     const promptTextarea = document.createElement("textarea");
     promptTextarea.id = `${id}-prompt`;
     promptTextarea.value = config.promptTemplate;
+    promptTextarea.rows = 3;
 
     header.appendChild(toggle);
     header.appendChild(title);
@@ -178,44 +180,19 @@ function renderPersonas(personas) {
     const card = document.createElement("div");
     card.className = "persona-card";
     card.dataset.personaId = persona.id;
-    card.style.cssText = `
-      border: 1px solid #2f3336;
-      border-radius: 12px;
-      padding: 12px;
-      margin-top: 12px;
-      background: rgba(255, 255, 255, 0.02);
-    `;
 
     const header = document.createElement("div");
-    header.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;";
+    header.className = "persona-header";
 
     const title = document.createElement("input");
     title.type = "text";
+    title.className = "persona-name-input";
     title.value = persona.name || "";
     title.placeholder = "Persona name";
-    title.style.cssText = `
-      flex: 1;
-      padding: 6px 8px;
-      border-radius: 6px;
-      border: 1px solid #2f3336;
-      background: #000;
-      color: #e7e9ea;
-      font-size: 13px;
-      font-weight: 600;
-      margin-right: 8px;
-    `;
 
     const deleteBtn = document.createElement("button");
+    deleteBtn.className = "delete-btn";
     deleteBtn.textContent = "Delete";
-    deleteBtn.style.cssText = `
-      padding: 4px 12px;
-      border-radius: 6px;
-      border: 1px solid #f4212e;
-      background: transparent;
-      color: #f4212e;
-      font-size: 12px;
-      cursor: pointer;
-    `;
     deleteBtn.addEventListener("click", () => {
       card.remove();
     });
@@ -225,23 +202,11 @@ function renderPersonas(personas) {
 
     const descLabel = document.createElement("label");
     descLabel.textContent = "Description";
-    descLabel.style.cssText = "display: block; font-size: 13px; margin-top: 8px; margin-bottom: 4px;";
 
     const descTextarea = document.createElement("textarea");
     descTextarea.value = persona.description || "";
     descTextarea.placeholder = "How this persona talks (e.g., 'Speaks like a CT degen, uses slang, short replies, casual insults.')";
-    descTextarea.style.cssText = `
-      width: 100%;
-      min-height: 60px;
-      padding: 6px 8px;
-      border-radius: 6px;
-      border: 1px solid #2f3336;
-      background: #000;
-      color: #e7e9ea;
-      font-size: 13px;
-      resize: vertical;
-      font-family: inherit;
-    `;
+    descTextarea.rows = 3;
 
     card.appendChild(header);
     card.appendChild(descLabel);
@@ -265,6 +230,17 @@ function extractPersonasFromUI() {
   }).filter(p => p.name || p.description); // Only include personas with at least name or description
 }
 
+function updateLicenseStatus(licenseKey) {
+  const statusEl = document.getElementById("licenseStatus");
+  if (licenseKey && licenseKey.trim()) {
+    statusEl.textContent = "License key saved";
+    statusEl.className = "status";
+  } else {
+    statusEl.textContent = "No license key entered";
+    statusEl.className = "status error";
+  }
+}
+
 function loadSettings() {
   chrome.storage.sync.get(null, (data) => {
     const licenseKey = data?.licenseKey || "";
@@ -279,6 +255,7 @@ function loadSettings() {
     document.getElementById("humanizeToggle").checked = !!globalSettings.humanize;
     document.getElementById("generalPrompt").value = generalPrompt;
 
+    updateLicenseStatus(licenseKey);
     renderModes(modes);
     renderPersonas(personas);
   });
@@ -348,8 +325,10 @@ function saveSettings() {
     },
     () => {
       chrome.storage.sync.remove(["language", "toxicity", "length", "temperature"]);
+      updateLicenseStatus(licenseKey);
       const status = document.getElementById("status");
       status.textContent = "Saved ✅";
+      status.className = "status";
       setTimeout(() => {
         status.textContent = "";
       }, 1500);

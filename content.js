@@ -1,20 +1,20 @@
 // content.js — Shadow Intern Twitter Extension (English-only + Media-only images)
 
 const MODE_PRESETS = [
-  { id: "one-liner", label: "☝️ One-Liner" },
-  { id: "agree", label: "👍 Agree" },
-  { id: "disagree", label: "👎 Disagree" },
-  { id: "funny", label: "😏 Funny" },
-  { id: "question", label: "🤔 Question" },
-  { id: "quote", label: "😎 Quote" },
-  { id: "answer", label: "🤓 Answer" },
-  { id: "congrats", label: "👏 Congrats" },
-  { id: "thanks", label: "🙏 Thanks" }
+  { id: "one-liner", label: "☝️ One-Liner", emoji: "☝️" },
+  { id: "agree", label: "✅ Agree", emoji: "✅" },
+  { id: "disagree", label: "❌ Disagree", emoji: "❌" },
+  { id: "funny", label: "😏 Funny", emoji: "😏" },
+  { id: "question", label: "❓ Question", emoji: "❓" },
+  { id: "quote", label: "💬 Quote", emoji: "💬" },
+  { id: "answer", label: "🧠 Answer", emoji: "🧠" },
+  { id: "congrats", label: "🎉 Congrats", emoji: "🎉" },
+  { id: "thanks", label: "🙏 Thanks", emoji: "🙏" }
 ];
 
 function buildDefaultModes() {
   return MODE_PRESETS.reduce((acc, mode) => {
-    acc[mode.id] = { ...mode, enabled: true };
+    acc[mode.id] = { ...mode, enabled: true, emoji: mode.emoji };
     return acc;
   }, {});
 }
@@ -27,7 +27,8 @@ function mergeModes(stored = {}) {
       id,
       label: (cfg.label || "").trim() || combined[id].label,
       enabled:
-        typeof cfg.enabled === "boolean" ? cfg.enabled : combined[id].enabled
+        typeof cfg.enabled === "boolean" ? cfg.enabled : combined[id].enabled,
+      emoji: combined[id].emoji // Preserve emoji from defaults
     };
   });
   return combined;
@@ -93,50 +94,116 @@ function findComposerWrappers() {
   return result;
 }
 
+// --------------- INJECT STYLES --------------------
+
+let stylesInjected = false;
+
+function injectStyles() {
+  if (stylesInjected) return;
+  
+  const style = document.createElement("style");
+  style.textContent = `
+    .xallower-panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+      margin-bottom: 4px;
+      width: 100%;
+    }
+
+    .xallower-btn {
+      border: 1px solid #2f3336;
+      border-radius: 20px;
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      color: rgb(231, 233, 234);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .xallower-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: #536471;
+    }
+
+    .xallower-btn:active {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .xallower-btn-emoji {
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .xallower-notice {
+      font-size: 12px;
+      color: rgb(231, 233, 234);
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      border: 1px solid #2f3336;
+    }
+  `;
+  document.head.appendChild(style);
+  stylesInjected = true;
+}
+
 // --------------- CREATE PANEL --------------------
 
 function createPanel() {
+  injectStyles();
+  
   const panel = document.createElement("div");
   panel.className = "xallower-panel";
-  panel.style.display = "flex";
-  panel.style.flexWrap = "wrap";
-  panel.style.gap = "8px";
-  panel.style.marginTop = "8px";
-  panel.style.marginBottom = "4px";
-  panel.style.width = "100%";
 
   const activeModes = getActiveModes();
 
   if (!activeModes.length) {
     const notice = document.createElement("div");
+    notice.className = "xallower-notice";
     notice.textContent = "Enable at least one mode in the options page.";
-    notice.style.fontSize = "12px";
-    notice.style.color = "rgb(239,243,244)";
     panel.appendChild(notice);
     return panel;
   }
 
   activeModes.forEach((mode) => {
     const btn = document.createElement("button");
-    btn.textContent = mode.label;
+    btn.className = "xallower-btn";
     btn.dataset.mode = mode.id;
 
-    btn.style.border = "1px solid rgb(29,155,240)";
-    btn.style.borderRadius = "9999px";
-    btn.style.padding = "4px 10px";
-    btn.style.background = "transparent";
-    btn.style.color = "rgb(239,243,244)";
-    btn.style.cursor = "pointer";
-    btn.style.fontSize = "13px";
-    btn.style.whiteSpace = "nowrap";
+    // Use emoji property if available, otherwise extract from label
+    const emoji = mode.emoji || "";
+    let labelText = mode.label || "";
+    
+    // If we have a separate emoji, remove it from the label text to avoid duplication
+    if (emoji && labelText.startsWith(emoji)) {
+      labelText = labelText.substring(emoji.length).trim();
+    } else if (!emoji && labelText) {
+      // If no emoji property, try to extract emoji from label
+      const emojiMatch = labelText.match(/^[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u);
+      if (emojiMatch) {
+        labelText = labelText.substring(emojiMatch[0].length).trim();
+      }
+    }
 
-    btn.addEventListener("mouseenter", () => {
-      btn.style.background = "rgba(29,155,240,0.2)";
-    });
+    if (emoji) {
+      const emojiSpan = document.createElement("span");
+      emojiSpan.className = "xallower-btn-emoji";
+      emojiSpan.textContent = emoji;
+      btn.appendChild(emojiSpan);
+    }
 
-    btn.addEventListener("mouseleave", () => {
-      btn.style.background = "transparent";
-    });
+    const textSpan = document.createElement("span");
+    textSpan.textContent = labelText || mode.id;
+    btn.appendChild(textSpan);
 
     btn.addEventListener("click", onModeClick);
 

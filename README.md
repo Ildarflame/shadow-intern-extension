@@ -1,38 +1,33 @@
 # Shadow Intern
 
-**Version:** 1.1.0
+**Version:** 1.0.0
 
 Shadow Intern is a Chrome extension that adds AI-powered reply workflows for Twitter/X. Generate contextual replies with customizable tones, lengths, and reply modes directly from the Twitter/X composer.
-
-## What's New in v1.1
-
-- **UI Refresh**: Complete redesign of popup, options page, and in-tweet buttons
-  - **New Popup Design**: Tabbed interface with Reply, Personas, and History tabs
-  - **Settings Dashboard**: Reorganized options page with clear sections and improved visual hierarchy
-  - **Native Button Styling**: In-tweet reply buttons now match Twitter/X's native design with emojis and improved hover states
-  - **Dark Theme**: Consistent dark theme throughout all UI components
 
 ## What's New in v1.0
 
 - **Improved Tweet Parsing**: Unified extraction function handles timeline and modal views, extracts text, images, metadata (tweet ID, URL, author)
+- **Video Detection**: Automatically detects video content in tweets and includes context in API requests
+- **Media Short Links**: Extracts pic.x.com/pic.twitter.com links from tweets and includes them in prompt context
 - **Robust Error Handling**: User-friendly error toasts for license issues, rate limits, server errors, and client-side problems
 - **Request Caching**: In-memory cache prevents duplicate requests for the same tweet/mode/persona combination
 - **General Prompt**: Global style/persona field that applies to all replies
 - **Custom Personas**: Create up to 3 custom personas with unique names and descriptions for different reply styles
 - **Multi-Language Support**: Automatically detects and replies in the same language as the original tweet
 - **Reply History**: View last 10 generated replies in the popup with copy functionality
+- **Tabbed Popup Interface**: Quick access to Reply settings, Personas, and History tabs
 
 ## Features
 
 ### 🎯 Multiple Reply Modes
 - **☝️ One-Liner** - Drop one ruthless bar that nails the core of the tweet
-- **👍 Agree** - Back the tweet up with extra alpha or a sharp supporting angle
-- **👎 Disagree** - Challenge the take with swagger, but keep it platform-safe
+- **✅ Agree** - Back the tweet up with extra alpha or a sharp supporting angle
+- **❌ Disagree** - Challenge the take with swagger, but keep it platform-safe
 - **😏 Funny** - Add a sarcastic or meme-able twist that still reacts to the tweet
-- **🤔 Question** - Ask a pointed question that drags more context out of the author
-- **😎 Quote** - Make it sound like a legendary CT quote that people will repost
-- **🤓 Answer** - Provide the missing insight or alpha the tweet is begging for
-- **👏 Congrats** - Hype them up while keeping the CT edge
+- **❓ Question** - Ask a pointed question that drags more context out of the author
+- **💬 Quote** - Make it sound like a legendary CT quote that people will repost
+- **🧠 Answer** - Provide the missing insight or alpha the tweet is begging for
+- **🎉 Congrats** - Hype them up while keeping the CT edge
 - **🙏 Thanks** - Show gratitude but keep the tone playful and on-brand
 
 ### ⚙️ Customization Options
@@ -40,11 +35,14 @@ Shadow Intern is a Chrome extension that adds AI-powered reply workflows for Twi
 - **Character Length**: Set max characters (50-500) with quick presets (Short: 80, Medium: 160, Long: 240)
 - **Humanized Replies**: Toggle casual, slangy CT vibes on/off
 - **Custom Mode Presets**: Enable/disable, rename, and customize prompt templates for each mode
-- **Image Support**: Automatically extracts and includes images from tweets in reply generation
+- **Image Support**: Automatically extracts and includes images from tweets in reply generation (filters out avatars and emojis)
+- **Video Detection**: Detects video content in tweets and includes context in API requests
+- **Media Short Links**: Extracts pic.x.com/pic.twitter.com links from tweets and includes them in prompt context
 - **General Prompt**: Set a global style/persona that applies to all replies (e.g., "Sarcastic crypto degen, short replies, uses CT slang")
 - **Custom Personas**: Create up to 3 named personas with custom descriptions for different reply styles
 - **Multi-Language**: Automatically replies in the same language as the original tweet
-- **Reply History**: View and copy your last 10 generated replies
+- **Reply History**: View and copy your last 10 generated replies (stored locally)
+- **Request Caching**: In-memory cache prevents duplicate API calls for the same tweet/mode/persona combination
 
 ### 🎨 User Interface
 - **Quick Settings Popup**: Tabbed interface with Reply, Personas, and History tabs for quick access to common settings
@@ -123,7 +121,9 @@ Configure:
 - **License Validation**: `https://api.shadowintern.xyz/license/validate`
 
 ### Storage
-Settings are synced across devices using Chrome's `chrome.storage.sync` API.
+- **Settings**: Synced across devices using Chrome's `chrome.storage.sync` API
+  - License key, global settings, modes, personas, general prompt
+- **Reply History**: Stored locally using `chrome.storage.local` API (last 10 replies, not synced)
 
 ### Permissions
 - `scripting`: Inject content scripts
@@ -174,12 +174,20 @@ No build process required. The extension runs directly from source files.
 ### Images not being extracted
 - The extension automatically filters out avatars and emojis
 - Only media images from tweets are included
+- Images must be at least 40x40 pixels to be included
 - Check browser console for extraction logs
+
+### Video and media links
+- The extension detects video elements in tweets and includes context in API requests
+- pic.x.com/pic.twitter.com links are extracted from tweet text and DOM
+- These links are included in the prompt context even if images aren't directly accessible
 
 ### Caching
 - Replies are cached in-memory for the current page session
+- Cache key includes: tweet ID (or 'no-id'), mode, and persona ID
 - Same tweet + mode + persona combination will use cached reply
 - Refresh the page to clear cache
+- Cache prevents duplicate API calls and improves performance
 
 ### Multi-Language
 - The extension automatically detects the language of the original tweet

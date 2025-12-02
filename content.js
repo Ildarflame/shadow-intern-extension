@@ -96,46 +96,106 @@ function findComposerWrappers() {
 
 // --------------- INJECT STYLES --------------------
 
-let stylesInjected = false;
+// --------------- THEME DETECTION --------------------
+
+function isDarkMode() {
+  try {
+    // Try to infer from actual background color
+    const bg = getComputedStyle(document.body).backgroundColor;
+    const match = bg && bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+    if (match) {
+      const r = parseInt(match[1], 10);
+      const g = parseInt(match[2], 10);
+      const b = parseInt(match[3], 10);
+      // Perceived luminance
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      return luminance < 0.5;
+    }
+  } catch (e) {
+    // ignore
+  }
+  // Fallback: system preference
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    return true;
+  }
+  return false;
+}
+
+function getShadowInternThemeColors() {
+  const dark = isDarkMode();
+  if (dark) {
+    return {
+      buttonBg: 'rgba(255, 255, 255, 0.06)',
+      buttonBorder: 'rgba(255, 255, 255, 0.16)',
+      buttonText: '#f7f9f9',
+      buttonHoverBg: 'rgba(255, 255, 255, 0.12)',
+      buttonHoverBorder: 'rgba(255, 255, 255, 0.32)',
+      buttonShadow: 'rgba(0, 0, 0, 0.2)',
+      buttonHoverShadow: 'rgba(0, 0, 0, 0.3)',
+      noticeBg: 'rgba(255, 255, 255, 0.06)',
+      noticeBorder: 'rgba(255, 255, 255, 0.16)',
+      noticeText: '#f7f9f9',
+    };
+  }
+  // Light theme
+  return {
+    buttonBg: 'rgba(15, 20, 25, 0.04)',
+    buttonBorder: 'rgba(15, 20, 25, 0.12)',
+    buttonText: '#0f1419',
+    buttonHoverBg: 'rgba(15, 20, 25, 0.08)',
+    buttonHoverBorder: 'rgba(15, 20, 25, 0.20)',
+    buttonShadow: 'rgba(15, 20, 25, 0.15)',
+    buttonHoverShadow: 'rgba(15, 20, 25, 0.2)',
+    noticeBg: 'rgba(15, 20, 25, 0.04)',
+    noticeBorder: 'rgba(15, 20, 25, 0.12)',
+    noticeText: '#0f1419',
+  };
+}
+
+let styleElement = null;
 
 function injectStyles() {
-  if (stylesInjected) return;
+  const themeColors = getShadowInternThemeColors();
   
-  const style = document.createElement("style");
-  style.textContent = `
+  const styleCSS = `
     .xallower-panel {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
+      gap: 8px;
       margin-top: 8px;
       margin-bottom: 4px;
       width: 100%;
     }
 
     .xallower-btn {
-      border: 1px solid #2f3336;
-      border-radius: 20px;
-      padding: 6px 12px;
-      background: rgba(255, 255, 255, 0.05);
-      color: rgb(231, 233, 234);
-      cursor: pointer;
-      font-size: 13px;
+      border-radius: 9999px;
+      padding: 6px 18px;
+      font-size: 14px;
+      line-height: 1;
       font-weight: 500;
-      white-space: nowrap;
-      transition: all 0.15s ease;
+      background-color: ${themeColors.buttonBg};
+      border: 1px solid ${themeColors.buttonBorder};
+      box-shadow: 0 1px 3px ${themeColors.buttonShadow};
+      color: ${themeColors.buttonText};
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease, transform 0.06s ease;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     .xallower-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: #536471;
+      background-color: ${themeColors.buttonHoverBg};
+      border-color: ${themeColors.buttonHoverBorder};
+      box-shadow: 0 2px 6px ${themeColors.buttonHoverShadow};
+      transform: translateY(-1px);
     }
 
     .xallower-btn:active {
-      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(0);
+      box-shadow: 0 1px 2px ${themeColors.buttonShadow};
     }
 
     .xallower-btn-emoji {
@@ -145,15 +205,27 @@ function injectStyles() {
 
     .xallower-notice {
       font-size: 12px;
-      color: rgb(231, 233, 234);
-      padding: 8px;
-      background: rgba(255, 255, 255, 0.03);
+      color: ${themeColors.noticeText};
+      padding: 8px 12px;
+      background-color: ${themeColors.noticeBg};
       border-radius: 8px;
-      border: 1px solid #2f3336;
+      border: 1px solid ${themeColors.noticeBorder};
+      box-shadow: 0 1px 3px ${themeColors.buttonShadow};
     }
   `;
-  document.head.appendChild(style);
-  stylesInjected = true;
+  
+  // Update existing style or create new one
+  if (styleElement && styleElement.parentNode) {
+    // Update existing style with new theme colors
+    styleElement.textContent = styleCSS;
+  } else {
+    // Create new style element
+    const style = document.createElement("style");
+    style.id = "xallower-styles";
+    style.textContent = styleCSS;
+    document.head.appendChild(style);
+    styleElement = style;
+  }
 }
 
 // --------------- CREATE PANEL --------------------
@@ -380,6 +452,60 @@ function getTweetData(fromElement) {
     })
     .map(img => img.src);
 
+  // Extract pic.x.com / pic.twitter.com URLs from both text and DOM anchor elements
+  const mediaShortLinks = [];
+  
+  // Helper function to create a fresh regex instance
+  const createPicUrlRegex = () => /https?:\/\/(?:pic\.x\.com|pic\.twitter\.com)\/\S+/gi;
+  
+  // Search in text content
+  const textMatches = text.match(createPicUrlRegex());
+  if (textMatches) {
+    textMatches.forEach(url => {
+      if (!mediaShortLinks.includes(url)) {
+        mediaShortLinks.push(url);
+      }
+    });
+  }
+  
+  // Search in DOM anchor elements
+  const anchorElements = tweetEl.querySelectorAll('a[href*="pic.x.com"], a[href*="pic.twitter.com"]');
+  anchorElements.forEach(anchor => {
+    const href = anchor.getAttribute('href');
+    if (href) {
+      // Normalize the URL (might be relative or absolute)
+      let normalizedUrl = href;
+      if (!normalizedUrl.startsWith('http')) {
+        normalizedUrl = normalizedUrl.startsWith('//') ? `https:${normalizedUrl}` : `https://${normalizedUrl}`;
+      }
+      // Check if it matches the pattern
+      const urlMatch = normalizedUrl.match(createPicUrlRegex());
+      if (urlMatch && !mediaShortLinks.includes(normalizedUrl)) {
+        mediaShortLinks.push(normalizedUrl);
+      }
+    }
+    // Also check anchor text content
+    const anchorText = anchor.textContent || anchor.innerText || '';
+    const textMatches = anchorText.match(createPicUrlRegex());
+    if (textMatches) {
+      textMatches.forEach(url => {
+        if (!mediaShortLinks.includes(url)) {
+          mediaShortLinks.push(url);
+        }
+      });
+    }
+  });
+
+  // Clean text: remove pic.x.com / pic.twitter.com URLs (Option A: remove from cleaned text)
+  let cleanText = text;
+  if (mediaShortLinks.length > 0) {
+    mediaShortLinks.forEach(url => {
+      cleanText = cleanText.replace(url, '').trim();
+    });
+    // Clean up any extra whitespace
+    cleanText = cleanText.replace(/\s+/g, ' ').trim();
+  }
+
   // Extract tweet URL and ID
   let tweetUrl = null;
   let tweetId = null;
@@ -420,10 +546,11 @@ function getTweetData(fromElement) {
     : [];
 
   const result = {
-    text: text || "",
+    text: cleanText || "",
     images: images,
     hasVideo: hasVideo,
     videoHints: videoHints,
+    mediaShortLinks: mediaShortLinks,
     tweetUrl: tweetUrl || "",
     authorHandle: authorHandle || "",
     tweetId: tweetId || ""
@@ -584,6 +711,7 @@ function onModeClick(event) {
         imageUrls: tweetData.images,
         hasVideo: !!tweetData.hasVideo,
         videoHints: tweetData.videoHints || [],
+        mediaShortLinks: tweetData.mediaShortLinks || [],
         tweetId: tweetData.tweetId,
         tweetUrl: tweetData.tweetUrl,
         authorHandle: tweetData.authorHandle

@@ -115,6 +115,48 @@ async function validateLicense(key) {
   }
 }
 
+function extractMediaShortLinksFromText(text) {
+  if (!text) return { cleanedText: text, links: [] };
+  
+  // 1) Normalize patterns like "https://\npic.x.com/..." into "https://pic.x.com/..."
+  let normalizedText = text.replace(
+    /https?:\/\/\s+(pic\.(?:x|twitter)\.com\/\S+)/gi,
+    'https://$1'
+  );
+  
+  // 2) Find all pic.x.com / pic.twitter.com links, with or without protocol
+  const regex = /(?:https?:\/\/)?pic\.(?:x|twitter)\.com\/\S+/gi;
+  const links = [];
+  let match;
+  while ((match = regex.exec(normalizedText)) !== null) {
+    let url = match[0];
+    // Normalize: always start with https://
+    if (!/^https?:\/\//i.test(url)) {
+      url = 'https://' + url;
+    }
+    links.push(url);
+  }
+  
+  const uniqueLinks = [...new Set(links)];
+  
+  // 3) Remove all found links from the text
+  let cleanedText = normalizedText;
+  uniqueLinks.forEach((link) => {
+    // Escape special regex characters in the link
+    const escaped = link.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const linkRegex = new RegExp(escaped, 'gi');
+    cleanedText = cleanedText.replace(linkRegex, '');
+  });
+  
+  // Optional: also trim leftover "https://" if it was not fully matched
+  cleanedText = cleanedText.replace(/https?:\/\/\s*/gi, '').trim();
+  
+  return {
+    cleanedText,
+    links: uniqueLinks,
+  };
+}
+
 async function callShadowIntern(body, licenseKey) {
   const res = await fetch(SHADOW_URL, {
     method: "POST",
@@ -161,12 +203,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       promptTemplate: selectedMode.promptTemplate || ""
     };
 
+    // Extract media short links from tweetText and clean the text
+    const { cleanedText, links: mediaShortLinks } = extractMediaShortLinksFromText(message.tweetText);
+
     const body = {
       mode: modeId,
-      tweetText: message.tweetText,
+      tweetText: cleanedText,
       imageUrls: message.imageUrls || [],
       hasVideo: !!message.hasVideo,
       videoHints: message.videoHints || [],
+      mediaShortLinks: mediaShortLinks,
       settings: requestSettings,
       generalPrompt: stored.generalPrompt || "",
       persona: stored.activePersona || null

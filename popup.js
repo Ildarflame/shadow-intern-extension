@@ -1,3 +1,5 @@
+// popup.js - Refactored with loadState, renderState, bindEvents
+
 const TONE_OPTIONS = ["neutral", "degen", "professional", "toxic"];
 
 const DEFAULT_GLOBAL_SETTINGS = {
@@ -7,11 +9,14 @@ const DEFAULT_GLOBAL_SETTINGS = {
 };
 
 // API Configuration
-// The API base URL is configured here. To change it, update LICENSE_VALIDATE_URL below.
 const LICENSE_VALIDATE_URL = "https://api.shadowintern.xyz/license/validate";
 
 // Cache TTL: 60 seconds
 const CACHE_TTL_MS = 60 * 1000;
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
 
 function sanitizeMaxChars(value) {
   const num = Number(value);
@@ -38,19 +43,32 @@ function normalizeGlobalSettings(raw = {}) {
   };
 }
 
-function saveGlobalSettings(next) {
-  chrome.storage.sync.set({ globalSettings: next });
+function formatPlanName(planCode) {
+  if (!planCode) return "—";
+  
+  const planMap = {
+    "pro_monthly": "Pro",
+    "pro_yearly": "Pro",
+    "pro": "Pro",
+    "max_monthly": "Max",
+    "max_yearly": "Max",
+    "max": "Max",
+    "basic_monthly": "Basic",
+    "basic_yearly": "Basic",
+    "basic": "Basic",
+    "starter_monthly": "Starter",
+    "starter_yearly": "Starter",
+    "starter": "Starter",
+  };
+
+  const planName = planMap[planCode.toLowerCase()] || planCode;
+  return planName;
 }
 
-function highlightLengthSegment(maxChars) {
-  const segments = document.querySelectorAll(".length-segment");
-  segments.forEach((btn) => {
-    const len = Number(btn.dataset.length);
-    btn.classList.toggle("active", len === maxChars);
-  });
-}
-
+// ============================================================================
 // License Management with Caching
+// ============================================================================
+
 async function getCachedLicenseInfo() {
   return new Promise((resolve) => {
     chrome.storage.local.get(['cachedLicenseInfo'], (data) => {
@@ -62,11 +80,10 @@ async function getCachedLicenseInfo() {
 
       const age = Date.now() - cached.cachedAt;
       if (age > CACHE_TTL_MS) {
-        resolve(null); // Cache expired
+        resolve(null);
         return;
       }
 
-      // Return cached data without the cachedAt timestamp
       const { cachedAt, ...licenseInfo } = cached;
       resolve(licenseInfo);
     });
@@ -116,7 +133,6 @@ async function fetchLicenseInfo(licenseKey) {
     };
   } catch (error) {
     console.error("[Popup] License fetch error:", error);
-    // Network error - return special error type
     return {
       error: "NETWORK_ERROR",
       message: error.message || "Network request failed"
@@ -124,25 +140,9 @@ async function fetchLicenseInfo(licenseKey) {
   }
 }
 
-function formatPlanName(planCode) {
-  if (!planCode) return "—";
-  
-  // Convert plan codes to readable names
-  const planMap = {
-    "pro_monthly": "Pro",
-    "pro_yearly": "Pro",
-    "pro": "Pro",
-    "basic_monthly": "Basic",
-    "basic_yearly": "Basic",
-    "basic": "Basic",
-    "starter_monthly": "Starter",
-    "starter_yearly": "Starter",
-    "starter": "Starter",
-  };
-
-  const planName = planMap[planCode.toLowerCase()] || planCode;
-  return planName;
-}
+// ============================================================================
+// UI State Management
+// ============================================================================
 
 function showSkeleton() {
   document.getElementById("skeletonState").style.display = "block";
@@ -186,7 +186,6 @@ function updateProgressBar(remaining, max) {
   const percentage = Math.max(0, Math.min(100, (remaining / max) * 100));
   progressBar.style.width = `${percentage}%`;
 
-  // Update color based on remaining
   progressBar.className = "progress-bar";
   if (remaining === 0) {
     progressBar.classList.add("zero");
@@ -195,25 +194,36 @@ function updateProgressBar(remaining, max) {
   }
 }
 
-function updateLicenseUI(licenseInfo, isOffline = false) {
+function highlightLengthSegment(maxChars) {
+  const segments = document.querySelectorAll(".length-segment");
+  segments.forEach((btn) => {
+    const len = Number(btn.dataset.length);
+    btn.classList.toggle("active", len === maxChars);
+  });
+}
+
+function updateStatusPill(status, className = "") {
   const statusPill = document.getElementById("statusPill");
-  const usageCard = document.getElementById("usageCard");
+  statusPill.textContent = status;
+  statusPill.className = `status-pill ${className}`;
+}
+
+// ============================================================================
+// Render State
+// ============================================================================
+
+function renderLicenseUI(licenseInfo, isOffline = false) {
+  const statusPill = document.getElementById("statusPill");
   const planValue = document.getElementById("planValue");
   const remainingValue = document.getElementById("remainingValue");
-  const offlineIndicator = document.getElementById("offlineIndicator");
-  const upgradeBtn = document.getElementById("upgradeBtn");
-
-  // Hide offline indicator by default
-  offlineIndicator.classList.add("hidden");
 
   // Handle no license key
   if (!licenseInfo || licenseInfo.error === "NO_LICENSE_KEY") {
-    statusPill.textContent = "EXPIRED";
-    statusPill.className = "status-pill expired";
+    updateStatusPill("NO LICENSE", "no-license");
     showEmptyState(
-      "Enter license key",
-      "Get started by entering your license key in settings.",
-      "Enter license key",
+      "Set up in 30 seconds",
+      "We send the tweet text to Shadow Intern API to generate your reply.",
+      "Set up",
       () => {
         if (chrome.runtime.openOptionsPage) {
           chrome.runtime.openOptionsPage();
@@ -222,7 +232,6 @@ function updateLicenseUI(licenseInfo, isOffline = false) {
         }
       }
     );
-    upgradeBtn.classList.add("hidden");
     return;
   }
 
@@ -231,9 +240,7 @@ function updateLicenseUI(licenseInfo, isOffline = false) {
     if (isOffline && licenseInfo) {
       // Use cached data if available
       const planName = formatPlanName(licenseInfo.planCode);
-      const limitPerDay = licenseInfo.limitPerDay;
-      const planDisplay = limitPerDay ? `${planName} — ${limitPerDay}/day` : planName;
-      planValue.textContent = planDisplay;
+      planValue.textContent = planName;
       
       const remaining = licenseInfo.remainingToday;
       if (remaining !== null && remaining !== undefined) {
@@ -241,10 +248,10 @@ function updateLicenseUI(licenseInfo, isOffline = false) {
         remainingValue.className = "remaining-value";
         if (remaining === 0) {
           remainingValue.classList.add("zero");
-        } else if (limitPerDay && remaining <= limitPerDay * 0.2) {
+        } else if (licenseInfo.limitPerDay && remaining <= licenseInfo.limitPerDay * 0.2) {
           remainingValue.classList.add("low");
         }
-        updateProgressBar(remaining, limitPerDay);
+        updateProgressBar(remaining, licenseInfo.limitPerDay);
       } else {
         remainingValue.textContent = "Unlimited";
         remainingValue.className = "remaining-value";
@@ -253,24 +260,15 @@ function updateLicenseUI(licenseInfo, isOffline = false) {
       
       showUsageCard();
       
-      // Show offline indicator
-      offlineIndicator.classList.remove("hidden");
-      offlineIndicator.textContent = "Offline";
-      
-      // Keep last known badge state
-      if (licenseInfo.valid) {
-        const isExpired = licenseInfo.expiresAt && new Date(licenseInfo.expiresAt) < new Date();
-        if (isExpired) {
-          statusPill.textContent = "EXPIRED";
-          statusPill.className = "status-pill expired";
-        } else {
-          statusPill.textContent = "ACTIVE";
-          statusPill.className = "status-pill active";
-        }
+      // Show offline status
+      const isExpired = licenseInfo.expiresAt && new Date(licenseInfo.expiresAt) < new Date();
+      if (isExpired) {
+        updateStatusPill("EXPIRED", "expired");
+      } else {
+        updateStatusPill("ACTIVE", "active");
       }
     } else {
-      statusPill.textContent = "EXPIRED";
-      statusPill.className = "status-pill expired";
+      updateStatusPill("STATUS UNAVAILABLE", "expired");
       showEmptyState(
         "Connection error",
         "Unable to validate license. Please check your connection.",
@@ -279,23 +277,21 @@ function updateLicenseUI(licenseInfo, isOffline = false) {
           chrome.storage.sync.get(['licenseKey'], async (data) => {
             const licenseKey = data?.licenseKey;
             if (licenseKey) {
-              updateLicenseInfo();
+              loadState();
             }
           });
         }
       );
     }
-    upgradeBtn.classList.add("hidden");
     return;
   }
 
   // Handle invalid/expired license
   if (licenseInfo.error === "INVALID_LICENSE" || !licenseInfo.valid) {
-    statusPill.textContent = "EXPIRED";
-    statusPill.className = "status-pill expired";
+    updateStatusPill("EXPIRED", "expired");
     showEmptyState(
-      "Fix license",
-      "Your license key is invalid or expired. Please update it in settings.",
+      "License invalid or expired",
+      "Please update your license key in settings or upgrade your plan.",
       "Fix license",
       () => {
         if (chrome.runtime.openOptionsPage) {
@@ -305,7 +301,6 @@ function updateLicenseUI(licenseInfo, isOffline = false) {
         }
       }
     );
-    upgradeBtn.classList.remove("hidden");
     return;
   }
 
@@ -313,36 +308,25 @@ function updateLicenseUI(licenseInfo, isOffline = false) {
   const isExpired = licenseInfo.expiresAt && new Date(licenseInfo.expiresAt) < new Date();
   
   if (isExpired) {
-    statusPill.textContent = "EXPIRED";
-    statusPill.className = "status-pill expired";
+    updateStatusPill("EXPIRED", "expired");
     showEmptyState(
       "License expired",
       "Your license has expired. Please renew or upgrade your plan.",
-      "Fix license",
+      "Upgrade plan",
       () => {
-        if (chrome.runtime.openOptionsPage) {
-          chrome.runtime.openOptionsPage();
-        } else {
-          window.open(chrome.runtime.getURL("options.html"));
-        }
+        chrome.tabs.create({ url: "https://shadowintern.xyz/pricing" });
       }
     );
-    upgradeBtn.classList.remove("hidden");
     return;
   }
 
   // Active license
-  statusPill.textContent = "ACTIVE";
-  statusPill.className = "status-pill active";
-  
-  // Show plan info
+  updateStatusPill("ACTIVE", "active");
   showUsageCard();
   
   // Format plan display
   const planName = formatPlanName(licenseInfo.planCode);
-  const limitPerDay = licenseInfo.limitPerDay;
-  const planDisplay = limitPerDay ? `${planName} — ${limitPerDay}/day` : planName;
-  planValue.textContent = planDisplay;
+  planValue.textContent = planName;
   
   // Show remaining today
   const remaining = licenseInfo.remainingToday;
@@ -351,45 +335,65 @@ function updateLicenseUI(licenseInfo, isOffline = false) {
     remainingValue.className = "remaining-value";
     if (remaining === 0) {
       remainingValue.classList.add("zero");
-    } else if (limitPerDay && remaining <= limitPerDay * 0.2) {
+    } else if (licenseInfo.limitPerDay && remaining <= licenseInfo.limitPerDay * 0.2) {
       remainingValue.classList.add("low");
     }
-    updateProgressBar(remaining, limitPerDay);
+    updateProgressBar(remaining, licenseInfo.limitPerDay);
   } else {
     remainingValue.textContent = "Unlimited";
     remainingValue.className = "remaining-value";
     updateProgressBar(null, null);
   }
-
-  // Show upgrade button conditionally
-  // Show when: plan is Starter OR remaining is 0 or low (<= 20% of limit)
-  const isLow = remaining !== null && remaining !== undefined && limitPerDay && 
-                remaining > 0 && remaining <= limitPerDay * 0.2;
-  const isZero = remaining !== null && remaining !== undefined && remaining === 0;
-  const isStarter = planName.toLowerCase() === "starter";
-  
-  const shouldShowUpgrade = isStarter || isZero || isLow;
-
-  if (shouldShowUpgrade) {
-    upgradeBtn.classList.remove("hidden");
-  } else {
-    upgradeBtn.classList.add("hidden");
-  }
 }
 
-async function updateLicenseInfo() {
+function renderControls(globalSettings, personas, activePersonaId) {
+  // Tone
+  const toneSelect = document.getElementById("toneSelect");
+  toneSelect.value = globalSettings.tone;
+
+  // Humanize toggle
+  const humanizeToggle = document.getElementById("humanizeToggle");
+  humanizeToggle.checked = !!globalSettings.humanize;
+
+  // Length segments
+  highlightLengthSegment(globalSettings.maxChars);
+
+  // Persona select
+  const personaSelect = document.getElementById("personaSelect");
+  personaSelect.innerHTML = '<option value="">No persona (default)</option>';
+  
+  personas.forEach((persona) => {
+    const option = document.createElement("option");
+    option.value = persona.id;
+    option.textContent = persona.name || `Persona ${persona.id.slice(-4)}`;
+    if (persona.id === activePersonaId) {
+      option.selected = true;
+    }
+    personaSelect.appendChild(option);
+  });
+}
+
+// ============================================================================
+// Load State
+// ============================================================================
+
+async function loadState() {
   // Show skeleton while loading
   showSkeleton();
-  const statusPill = document.getElementById("statusPill");
-  statusPill.textContent = "LOADING";
-  statusPill.className = "status-pill loading";
+  updateStatusPill("LOADING", "loading");
 
   // Read licenseKey from chrome.storage
-  chrome.storage.sync.get(['licenseKey'], async (data) => {
+  chrome.storage.sync.get(['licenseKey', 'globalSettings', 'personas', 'activePersonaId'], async (data) => {
     const licenseKey = data?.licenseKey;
     
+    // Load and render controls
+    const globalSettings = normalizeGlobalSettings(data?.globalSettings);
+    const personas = data?.personas || [];
+    const activePersonaId = data?.activePersonaId || null;
+    renderControls(globalSettings, personas, activePersonaId);
+    
     if (!licenseKey || !licenseKey.trim()) {
-      updateLicenseUI(null);
+      renderLicenseUI(null);
       return;
     }
 
@@ -398,7 +402,7 @@ async function updateLicenseInfo() {
     
     // If cache is valid, show cached data immediately
     if (cachedInfo) {
-      updateLicenseUI(cachedInfo, false);
+      renderLicenseUI(cachedInfo, false);
     }
 
     // Always try to fetch fresh data (but don't block UI)
@@ -406,7 +410,7 @@ async function updateLicenseInfo() {
     
     // If we got fresh data, update UI and cache
     if (freshInfo && !freshInfo.error) {
-      updateLicenseUI(freshInfo, false);
+      renderLicenseUI(freshInfo, false);
       
       // Cache the fresh data
       chrome.storage.local.set({
@@ -418,75 +422,30 @@ async function updateLicenseInfo() {
     } else if (freshInfo && freshInfo.error === "NETWORK_ERROR") {
       // Network error - use cached data if available
       if (cachedInfo) {
-        updateLicenseUI(cachedInfo, true); // isOffline = true
+        renderLicenseUI(cachedInfo, true); // isOffline = true
       } else {
-        updateLicenseUI(freshInfo, false);
+        renderLicenseUI(freshInfo, false);
       }
     } else {
       // Invalid/expired license - update UI and clear cache
-      updateLicenseUI(freshInfo, false);
+      renderLicenseUI(freshInfo, false);
       chrome.storage.local.remove(['cachedLicenseInfo']);
     }
   });
 }
 
-// Persona Select (for Reply tab)
-function loadPersonas() {
-  chrome.storage.sync.get(['personas', 'activePersonaId'], (data) => {
-    const personas = data.personas || [];
-    const activePersonaId = data.activePersonaId || null;
-    const personaSelect = document.getElementById("personaSelect");
-    
-    // Clear existing options except "No persona"
-    personaSelect.innerHTML = '<option value="">No persona (default)</option>';
-    
-    personas.forEach((persona) => {
-      const option = document.createElement("option");
-      option.value = persona.id;
-      option.textContent = persona.name || `Persona ${persona.id.slice(-4)}`;
-      if (persona.id === activePersonaId) {
-        option.selected = true;
-      }
-      personaSelect.appendChild(option);
-    });
-  });
-}
+// ============================================================================
+// Bind Events
+// ============================================================================
 
-document.addEventListener("DOMContentLoaded", () => {
-  // License badge and info - refresh on popup open
-  updateLicenseInfo();
-
-  // Reply tab controls
-  const toneSelect = document.getElementById("toneSelect");
-  const humanizeToggle = document.getElementById("humanizeToggle");
-  const lengthSegments = document.querySelectorAll(".length-segment");
-  const personaSelect = document.getElementById("personaSelect");
-
-  // Load initial settings
-  chrome.storage.sync.get(null, (data) => {
-    const globalSettings = normalizeGlobalSettings(data?.globalSettings);
-    highlightLengthSegment(globalSettings.maxChars);
-    toneSelect.value = globalSettings.tone;
-    humanizeToggle.checked = !!globalSettings.humanize;
-  });
-
-  loadPersonas();
-
-  // Listen for storage changes
-  chrome.storage.onChanged.addListener((changes) => {
-    if (changes.personas || changes.activePersonaId) {
-      loadPersonas();
-    }
-    if (changes.licenseKey) {
-      // License key changed - clear cache and refresh
-      chrome.storage.local.remove(['cachedLicenseInfo'], () => {
-        updateLicenseInfo();
-      });
-    }
-  });
+function bindEvents() {
+  // Save global settings
+  function saveGlobalSettings(next) {
+    chrome.storage.sync.set({ globalSettings: next });
+  }
 
   // Length segments
-  lengthSegments.forEach((btn) => {
+  document.querySelectorAll(".length-segment").forEach((btn) => {
     btn.addEventListener("click", () => {
       const selected = Number(btn.dataset.length);
       highlightLengthSegment(selected);
@@ -499,6 +458,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Tone select
+  const toneSelect = document.getElementById("toneSelect");
   toneSelect.addEventListener("change", () => {
     const tone = toneSelect.value;
     chrome.storage.sync.get("globalSettings", (data) => {
@@ -508,6 +468,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Humanize toggle
+  const humanizeToggle = document.getElementById("humanizeToggle");
   humanizeToggle.addEventListener("change", () => {
     const humanize = humanizeToggle.checked;
     chrome.storage.sync.get("globalSettings", (data) => {
@@ -517,6 +478,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Persona select
+  const personaSelect = document.getElementById("personaSelect");
   personaSelect.addEventListener("change", () => {
     const personaId = personaSelect.value || null;
     chrome.storage.sync.set({ activePersonaId: personaId });
@@ -542,11 +504,48 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Upgrade button
-  const upgradeBtn = document.getElementById("upgradeBtn");
-  if (upgradeBtn) {
-    upgradeBtn.addEventListener("click", () => {
-      chrome.tabs.create({ url: "https://shadowintern.xyz/pricing" });
+  // Help button
+  const helpBtn = document.getElementById("helpBtn");
+  if (helpBtn) {
+    helpBtn.addEventListener("click", () => {
+      chrome.tabs.create({ url: chrome.runtime.getURL("help.html") });
     });
   }
+
+  // Listen for storage changes
+  chrome.storage.onChanged.addListener((changes) => {
+    if (changes.personas || changes.activePersonaId) {
+      chrome.storage.sync.get(['personas', 'activePersonaId'], (data) => {
+        const personas = data.personas || [];
+        const activePersonaId = data.activePersonaId || null;
+        chrome.storage.sync.get(['globalSettings'], (data2) => {
+          const globalSettings = normalizeGlobalSettings(data2?.globalSettings);
+          renderControls(globalSettings, personas, activePersonaId);
+        });
+      });
+    }
+    if (changes.licenseKey) {
+      // License key changed - clear cache and refresh
+      chrome.storage.local.remove(['cachedLicenseInfo'], () => {
+        loadState();
+      });
+    }
+    if (changes.globalSettings) {
+      chrome.storage.sync.get(['globalSettings', 'personas', 'activePersonaId'], (data) => {
+        const globalSettings = normalizeGlobalSettings(data?.globalSettings);
+        const personas = data.personas || [];
+        const activePersonaId = data.activePersonaId || null;
+        renderControls(globalSettings, personas, activePersonaId);
+      });
+    }
+  });
+}
+
+// ============================================================================
+// Initialize
+// ============================================================================
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadState();
+  bindEvents();
 });

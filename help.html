@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Shadow Intern - Help</title>
+  <link rel="stylesheet" href="shared-styles.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background: var(--bg);
+      color: var(--fg);
+      padding: var(--spacing-2xl);
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: var(--spacing-2xl);
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto var(--spacing-md);
+    }
+
+    h1 {
+      font-size: var(--font-size-xl);
+      font-weight: 600;
+      color: var(--fg);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .subtitle {
+      font-size: var(--font-size-sm);
+      color: var(--fg-muted);
+    }
+
+    .steps {
+      margin-top: var(--spacing-2xl);
+    }
+
+    .step {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .step-number {
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      background: var(--emerald);
+      color: var(--bg);
+      border-radius: 50%;
+      text-align: center;
+      line-height: 28px;
+      font-weight: 600;
+      font-size: var(--font-size-sm);
+      margin-right: var(--spacing-md);
+    }
+
+    .step-title {
+      font-size: var(--font-size-md);
+      font-weight: 600;
+      color: var(--fg);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .step-content {
+      font-size: var(--font-size-base);
+      color: var(--fg-muted);
+      margin-left: 36px;
+    }
+
+    .cta-button {
+      display: inline-block;
+      margin-top: var(--spacing-lg);
+      padding: 12px 24px;
+      background: var(--emerald);
+      color: var(--bg);
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      font-weight: 600;
+      transition: all var(--transition-base);
+    }
+
+    .cta-button:hover {
+      background: var(--emerald-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+    }
+
+    .footer {
+      margin-top: var(--spacing-2xl);
+      text-align: center;
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid var(--border);
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-md);
+    }
+
+    .footer-link {
+      font-size: var(--font-size-sm);
+      color: var(--fg-muted);
+      text-decoration: none;
+      transition: color var(--transition-base);
+    }
+
+    .footer-link:hover {
+      color: var(--emerald);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <svg class="logo-icon" viewBox="0 0 64 64" aria-hidden="true">
+      <path d="M8 24.5C8 22.7 8.7 21 10.1 19.9L27.9 6.9C29.1 5.9 30.9 5.9 32.1 6.9L49.9 19.9C51.3 21 52 22.7 52 24.5V39.5C52 41.3 51.3 43 49.9 44.1L32.1 57.1C30.9 58.1 29.1 58.1 27.9 57.1L10.1 44.1C8.7 43 8 41.3 8 39.5V24.5Z" fill="#16A34A"/>
+      <path d="M16 32C16 31.3 16.4 30.6 17.1 30.1L26.8 23.4C28.2 22.4 29.8 22.4 31.2 23.4L40.9 30.1C41.6 30.6 42 31.3 42 32C42 32.7 41.6 33.4 40.9 33.9L31.2 40.6C29.8 41.6 28.2 41.6 26.8 40.6L17.1 33.9C16.4 33.4 16 32.7 16 32Z" fill="#ECFDF5"/>
+      <circle cx="32" cy="32" r="9" fill="#022C22"/>
+      <path d="M32 24L33.4 29.4L38.5 32L33.4 34.6L32 40L30.6 34.6L25.5 32L30.6 29.4L32 24Z" fill="#FFFFFF"/>
+    </svg>
+    <h1>Get Started with Shadow Intern</h1>
+    <p class="subtitle">Set up in 30 seconds</p>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div>
+        <span class="step-number">1</span>
+        <span class="step-title">Get a plan at shadowintern.xyz</span>
+      </div>
+      <div class="step-content">
+        Visit <a href="https://shadowintern.xyz/pricing" target="_blank" style="color: var(--emerald);">shadowintern.xyz/pricing</a> to choose a plan that fits your needs.
+      </div>
+    </div>
+
+    <div class="step">
+      <div>
+        <span class="step-number">2</span>
+        <span class="step-title">Copy your license key</span>
+      </div>
+      <div class="step-content">
+        After purchasing, you'll receive a license key. Copy it from your account dashboard or email.
+      </div>
+    </div>
+
+    <div class="step">
+      <div>
+        <span class="step-number">3</span>
+        <span class="step-title">Paste in Settings</span>
+      </div>
+      <div class="step-content">
+        Open Shadow Intern settings (click the extension icon → "Full settings"), paste your license key in the License tab, and click "Check status".
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align: center;">
+    <a href="options.html" class="cta-button">Open Settings</a>
+  </div>
+
+  <div class="footer">
+    <p style="font-size: var(--font-size-sm); color: var(--fg-muted);">
+      Need help? We're here for you.
+    </p>
+    <div class="footer-links">
+      <a href="https://t.me/shadowintern" target="_blank" class="footer-link">Support</a>
+      <span style="color: var(--fg-muted);">•</span>
+      <a href="https://shadowintern.xyz/privacy" target="_blank" class="footer-link">Privacy</a>
+      <span style="color: var(--fg-muted);">•</span>
+      <a href="https://shadowintern.xyz/terms" target="_blank" class="footer-link">Terms</a>
+    </div>
+  </div>
+</body>
+</html>
+

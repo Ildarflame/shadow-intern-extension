@@ -395,13 +395,33 @@ function initTabs() {
 
 function initReplySettings() {
   const toneSelect = document.getElementById("tone");
+  const personaDefaultSelect = document.getElementById("personaDefault");
   const humanizeToggle = document.getElementById("humanizeToggle");
   const maxCharsSlider = document.getElementById("maxCharsSlider");
   const maxCharsInput = document.getElementById("maxChars");
   const lengthControl = document.getElementById("lengthControl");
 
+  // Load persona options
+  function loadPersonaOptions() {
+    chrome.storage.sync.get(['personas', 'activePersonaId'], (data) => {
+      const personas = data.personas || [];
+      const activePersonaId = data.activePersonaId || null;
+      
+      personaDefaultSelect.innerHTML = '<option value="">No persona (default)</option>';
+      personas.forEach((persona) => {
+        const option = document.createElement("option");
+        option.value = persona.id;
+        option.textContent = persona.name || `Persona ${persona.id.slice(-4)}`;
+        if (persona.id === activePersonaId) {
+          option.selected = true;
+        }
+        personaDefaultSelect.appendChild(option);
+      });
+    });
+  }
+
   // Load settings
-  chrome.storage.sync.get(['globalSettings'], (data) => {
+  chrome.storage.sync.get(['globalSettings', 'personas', 'activePersonaId'], (data) => {
     const settings = normalizeGlobalSettings(data?.globalSettings);
     
     toneSelect.value = settings.tone;
@@ -411,12 +431,20 @@ function initReplySettings() {
     
     // Update length segments
     updateLengthSegments(settings.maxChars);
+    loadPersonaOptions();
     updatePreview();
   });
 
   // Tone change
   toneSelect.addEventListener("change", () => {
     updatePreview();
+    markUnsaved();
+  });
+
+  // Persona default change
+  personaDefaultSelect.addEventListener("change", () => {
+    const personaId = personaDefaultSelect.value || null;
+    chrome.storage.sync.set({ activePersonaId: personaId });
     markUnsaved();
   });
 
@@ -454,6 +482,13 @@ function initReplySettings() {
     updateLengthSegments(value);
     updatePreview();
     markUnsaved();
+  });
+
+  // Listen for persona changes
+  chrome.storage.onChanged.addListener((changes) => {
+    if (changes.personas || changes.activePersonaId) {
+      loadPersonaOptions();
+    }
   });
 }
 
@@ -737,7 +772,9 @@ function renderPersonas(personas) {
 function updateAddPersonaButton() {
   const personas = extractPersonasFromUI();
   const addBtn = document.getElementById("addPersonaBtn");
-  addBtn.disabled = personas.length >= 3;
+  if (addBtn) {
+    addBtn.disabled = personas.length >= 3;
+  }
 }
 
 function extractPersonasFromUI() {
@@ -931,6 +968,7 @@ function loadSettings() {
     const modes = mergeModes(data?.modes);
     const generalPrompt = data?.generalPrompt || "";
     const personas = data?.personas || [];
+    const activePersonaId = data?.activePersonaId || null;
 
     // License
     document.getElementById("licenseKey").value = licenseKey;
@@ -944,6 +982,19 @@ function loadSettings() {
     document.getElementById("maxCharsSlider").value = globalSettings.maxChars;
     document.getElementById("maxChars").value = globalSettings.maxChars;
     updateLengthSegments(globalSettings.maxChars);
+
+    // Persona default
+    const personaDefaultSelect = document.getElementById("personaDefault");
+    personaDefaultSelect.innerHTML = '<option value="">No persona (default)</option>';
+    personas.forEach((persona) => {
+      const option = document.createElement("option");
+      option.value = persona.id;
+      option.textContent = persona.name || `Persona ${persona.id.slice(-4)}`;
+      if (persona.id === activePersonaId) {
+        option.selected = true;
+      }
+      personaDefaultSelect.appendChild(option);
+    });
 
     // General prompt
     document.getElementById("generalPrompt").value = generalPrompt;
@@ -994,32 +1045,35 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("generalPrompt").addEventListener("input", markUnsaved);
 
   // Add persona button
-  document.getElementById("addPersonaBtn").addEventListener("click", () => {
-    const personas = extractPersonasFromUI();
-    if (personas.length >= 3) {
-      showToast("Maximum 3 personas allowed", "error");
-      return;
-    }
-    
-    const newPersona = {
-      id: generatePersonaId(),
-      name: "",
-      description: ""
-    };
-    
-    const updatedPersonas = [...personas, newPersona];
-    renderPersonas(updatedPersonas);
-    markUnsaved();
-    
-    // Auto-open edit mode for new persona
-    setTimeout(() => {
-      const newCard = document.querySelector(`[data-persona-id="${newPersona.id}"]`);
-      if (newCard) {
-        const editBtn = newCard.querySelector(".persona-edit-btn");
-        if (editBtn) editBtn.click();
+  const addPersonaBtn = document.getElementById("addPersonaBtn");
+  if (addPersonaBtn) {
+    addPersonaBtn.addEventListener("click", () => {
+      const personas = extractPersonasFromUI();
+      if (personas.length >= 3) {
+        showToast("Maximum 3 personas allowed", "error");
+        return;
       }
-    }, 100);
-  });
+      
+      const newPersona = {
+        id: generatePersonaId(),
+        name: "",
+        description: ""
+      };
+      
+      const updatedPersonas = [...personas, newPersona];
+      renderPersonas(updatedPersonas);
+      markUnsaved();
+      
+      // Auto-open edit mode for new persona
+      setTimeout(() => {
+        const newCard = document.querySelector(`[data-persona-id="${newPersona.id}"]`);
+        if (newCard) {
+          const editBtn = newCard.querySelector(".persona-edit-btn");
+          if (editBtn) editBtn.click();
+        }
+      }, 100);
+    });
+  }
 
   // Export/Import/Reset buttons
   document.getElementById("exportBtn").addEventListener("click", exportSettings);

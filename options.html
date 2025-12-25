@@ -19,7 +19,7 @@
             <path d="M32 24L33.4 29.4L38.5 32L33.4 34.6L32 40L30.6 34.6L25.5 32L30.6 29.4L32 24Z" fill="#FFFFFF"/>
           </svg>
           <span class="header-title">Shadow Intern</span>
-    </div>
+        </div>
       </div>
       <div class="header-right">
         <div class="license-status-pill" id="licenseStatusPill">INACTIVE</div>
@@ -33,7 +33,7 @@
   <nav class="tab-nav" id="tabNav">
     <button class="tab-btn active" data-tab="license">License</button>
     <button class="tab-btn" data-tab="reply">Reply</button>
-    <button class="tab-btn" data-tab="personas">Personas</button>
+    <button class="tab-btn" data-tab="modes">Modes</button>
     <button class="tab-btn" data-tab="advanced">Advanced</button>
   </nav>
 
@@ -56,10 +56,17 @@
         <div class="license-status-inline" id="licenseStatusInline"></div>
         <div class="privacy-disclosure">
           <strong>Privacy Disclosure</strong>
-          <p>This extension sends tweet text and attached media links to Shadow Intern API to generate replies. Your license key and usage data are stored locally. We do not track your browsing activity or collect personal information beyond what's necessary for the service.</p>
+          <p>This extension reads the tweet you reply to and sends text + media links to api.shadowintern.xyz to generate a reply. All actions are user-triggered only. Your license key and usage data are stored locally. We do not track your browsing activity or collect personal information beyond what's necessary for the service.</p>
+        </div>
+        <div class="disclosure-links">
+          <a href="https://shadowintern.xyz/privacy" target="_blank" class="disclosure-link">Privacy Policy</a>
+          <span class="disclosure-separator">•</span>
+          <a href="https://shadowintern.xyz/terms" target="_blank" class="disclosure-link">Terms of Service</a>
+          <span class="disclosure-separator">•</span>
+          <a href="https://t.me/shadowintern" target="_blank" class="disclosure-link">Support</a>
         </div>
       </div>
-      </div>
+    </div>
 
     <!-- Reply Tab -->
     <div class="tab-content" id="tab-reply">
@@ -69,28 +76,36 @@
         <div class="form-group">
           <label for="tone">Tone</label>
           <select id="tone" class="form-control">
-        <option value="neutral">Neutral</option>
-        <option value="degen">Degen</option>
-        <option value="professional">Professional</option>
-        <option value="toxic">Toxic</option>
-      </select>
+            <option value="neutral">Neutral</option>
+            <option value="degen">Degen</option>
+            <option value="professional">Professional</option>
+            <option value="toxic">Toxic</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="personaDefault">Persona Default</label>
+          <select id="personaDefault" class="form-control">
+            <option value="">No persona (default)</option>
+          </select>
+          <div class="hint">Select a default persona to use for all replies. You can override this per-reply in the popup.</div>
         </div>
 
         <div class="form-group">
           <label>Reply Length</label>
           <div class="segmented-control" id="lengthControl">
-            <button class="segment-btn" data-length="150">Short</button>
-            <button class="segment-btn active" data-length="220">Medium</button>
-            <button class="segment-btn" data-length="280">Long</button>
+            <button class="segment-btn" data-length="80">Short</button>
+            <button class="segment-btn" data-length="160">Medium</button>
+            <button class="segment-btn" data-length="240">Long</button>
           </div>
         </div>
 
         <div class="form-group">
           <div class="checkbox-group">
             <input type="checkbox" id="humanizeToggle" />
-        <label for="humanizeToggle">Humanized Replies</label>
-      </div>
-      <div class="hint">Keep replies casual + degen. Disable for neutral AI vibes.</div>
+            <label for="humanizeToggle">Humanized Replies</label>
+          </div>
+          <div class="hint">Adds natural variation and casual tone to replies. Disable for more consistent, neutral AI responses.</div>
         </div>
 
         <div class="form-group">
@@ -125,29 +140,28 @@
           </div>
         </div>
       </div>
-
-      <!-- Reply Modes Section -->
-      <div class="card">
-        <h2 class="card-title">Reply Modes</h2>
-      <div class="hint">Toggle, rename, and customize the prompt template per mode.</div>
-        <div class="modes-accordion" id="modesAccordion"></div>
-      </div>
     </div>
 
-    <!-- Personas Tab -->
-    <div class="tab-content" id="tab-personas">
+    <!-- Modes Tab -->
+    <div class="tab-content" id="tab-modes">
       <div class="card">
-        <div class="card-header-flex">
-          <h2 class="card-title">Custom Personas</h2>
-          <button class="btn btn-secondary" id="addPersonaBtn" disabled>+ Add Persona</button>
-        </div>
-        <div class="hint">Create up to 3 custom personas for different reply styles.</div>
-        <div class="personas-grid" id="personasGrid"></div>
+        <h2 class="card-title">Reply Modes</h2>
+        <div class="hint">Toggle, rename, and customize the prompt template per mode.</div>
+        <div class="modes-accordion" id="modesAccordion"></div>
       </div>
     </div>
 
     <!-- Advanced Tab -->
     <div class="tab-content" id="tab-advanced">
+      <div class="card">
+        <h2 class="card-title">Custom Personas</h2>
+        <div class="card-header-flex">
+          <div class="hint" style="margin: 0;">Create up to 3 custom personas for different reply styles.</div>
+          <button class="btn btn-secondary" id="addPersonaBtn">+ Add Persona</button>
+        </div>
+        <div class="personas-grid" id="personasGrid"></div>
+      </div>
+
       <div class="card">
         <h2 class="card-title">Global Prompt</h2>
         <div class="form-group">

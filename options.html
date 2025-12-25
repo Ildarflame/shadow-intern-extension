@@ -3,371 +3,201 @@
 <head>
   <meta charset="utf-8">
   <title>Shadow Intern Settings</title>
-  <style>
-    :root {
-      --bg: #000000;
-      --bg-card: #16181c;
-      --fg: #e7e9ea;
-      --fg-muted: #8b98a5;
-      --fg-dim: #71767a;
-      --border: #2f3336;
-      --accent: rgb(29,155,240);
-      --accent-hover: rgba(29,155,240,0.2);
-      --success: #00ba7c;
-      --error: #f4212e;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-      background: var(--bg);
-      color: var(--fg);
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-    }
-
-    .page-container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 24px 16px;
-    }
-
-    h1 {
-      font-size: 24px;
-      font-weight: 700;
-      margin: 0 0 24px 0;
-      color: var(--fg);
-    }
-
-    h2 {
-      font-size: 18px;
-      font-weight: 600;
-      margin: 0 0 12px 0;
-      color: var(--fg);
-    }
-
-    /* Card Sections */
-    .card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-
-    .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-
-    /* Form Elements */
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 500;
-      margin-top: 16px;
-      margin-bottom: 6px;
-      color: var(--fg);
-    }
-
-    label:first-child {
-      margin-top: 0;
-    }
-
-    input[type="text"],
-    input[type="number"],
-    select {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--fg);
-      font-size: 13px;
-      font-family: inherit;
-      transition: border-color 0.2s;
-    }
-
-    input[type="text"]:focus,
-    input[type="number"]:focus,
-    select:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-
-    textarea {
-      width: 100%;
-      min-height: 100px;
-      padding: 10px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--fg);
-      font-size: 13px;
-      font-family: inherit;
-      resize: vertical;
-      transition: border-color 0.2s;
-    }
-
-    textarea:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-
-    input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-      accent-color: var(--accent);
-    }
-
-    .checkbox-label {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 16px;
-    }
-
-    .hint {
-      font-size: 12px;
-      color: var(--fg-muted);
-      margin-top: 6px;
-      line-height: 1.4;
-    }
-
-    /* Status */
-    .status {
-      margin-top: 12px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--success);
-    }
-
-    .status.error {
-      color: var(--error);
-    }
-
-    /* Buttons */
-    button {
-      padding: 10px 20px;
-      border-radius: 20px;
-      border: none;
-      background: var(--accent);
-      color: #fff;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.2s;
-      font-family: inherit;
-    }
-
-    button:hover {
-      opacity: 0.9;
-    }
-
-    button:active {
-      opacity: 0.8;
-    }
-
-    .save-button {
-      margin-top: 24px;
-      padding: 12px 32px;
-      font-size: 14px;
-    }
-
-    /* Mode Cards */
-    .mode-card {
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      margin-top: 12px;
-      background: var(--bg);
-      transition: border-color 0.2s;
-    }
-
-    .mode-card.disabled {
-      opacity: 0.5;
-    }
-
-    .mode-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .mode-header input[type="checkbox"] {
-      margin: 0;
-    }
-
-    .mode-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--fg);
-    }
-
-    /* Persona Cards */
-    .persona-card {
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      margin-top: 12px;
-      background: var(--bg);
-    }
-
-    .persona-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      gap: 12px;
-    }
-
-    .persona-name-input {
-      flex: 1;
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--bg-card);
-      color: var(--fg);
-      font-size: 14px;
-      font-weight: 600;
-      font-family: inherit;
-    }
-
-    .delete-btn {
-      padding: 6px 16px;
-      border-radius: 8px;
-      border: 1px solid var(--error);
-      background: transparent;
-      color: var(--error);
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .delete-btn:hover {
-      background: rgba(244, 33, 46, 0.1);
-    }
-
-    .add-persona-btn {
-      margin-top: 12px;
-      background: transparent;
-      border: 1px dashed var(--border);
-      color: var(--fg);
-    }
-
-    .add-persona-btn:hover {
-      background: var(--bg-card);
-      border-color: var(--accent);
-    }
-
-    /* Footer */
-    .footer {
-      margin-top: 40px;
-      padding-top: 24px;
-      border-top: 1px solid var(--border);
-      text-align: center;
-      color: var(--fg-muted);
-      font-size: 12px;
-    }
-
-    .footer a {
-      color: var(--accent);
-      text-decoration: none;
-    }
-
-    .footer a:hover {
-      text-decoration: underline;
-    }
-  </style>
+  <link rel="stylesheet" href="shared-styles.css">
+  <link rel="stylesheet" href="options.css">
 </head>
 <body>
+  <!-- Top Header Bar -->
+  <header class="header-bar">
+    <div class="header-content">
+      <div class="header-left">
+        <div class="logo-container">
+          <svg viewBox="0 0 64 64" class="logo-icon" aria-hidden="true">
+            <path d="M8 24.5C8 22.7 8.7 21 10.1 19.9L27.9 6.9C29.1 5.9 30.9 5.9 32.1 6.9L49.9 19.9C51.3 21 52 22.7 52 24.5V39.5C52 41.3 51.3 43 49.9 44.1L32.1 57.1C30.9 58.1 29.1 58.1 27.9 57.1L10.1 44.1C8.7 43 8 41.3 8 39.5V24.5Z" fill="#16A34A"/>
+            <path d="M16 32C16 31.3 16.4 30.6 17.1 30.1L26.8 23.4C28.2 22.4 29.8 22.4 31.2 23.4L40.9 30.1C41.6 30.6 42 31.3 42 32C42 32.7 41.6 33.4 40.9 33.9L31.2 40.6C29.8 41.6 28.2 41.6 26.8 40.6L17.1 33.9C16.4 33.4 16 32.7 16 32Z" fill="#ECFDF5"/>
+            <circle cx="32" cy="32" r="9" fill="#022C22"/>
+            <path d="M32 24L33.4 29.4L38.5 32L33.4 34.6L32 40L30.6 34.6L25.5 32L30.6 29.4L32 24Z" fill="#FFFFFF"/>
+          </svg>
+          <span class="header-title">Shadow Intern</span>
+    </div>
+      </div>
+      <div class="header-right">
+        <div class="license-status-pill" id="licenseStatusPill">INACTIVE</div>
+        <div class="plan-label" id="planLabel">—</div>
+        <div class="remaining-today" id="remainingToday">Remaining today: —</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Tab Navigation -->
+  <nav class="tab-nav" id="tabNav">
+    <button class="tab-btn active" data-tab="license">License</button>
+    <button class="tab-btn" data-tab="reply">Reply</button>
+    <button class="tab-btn" data-tab="personas">Personas</button>
+    <button class="tab-btn" data-tab="advanced">Advanced</button>
+  </nav>
+
+  <!-- Main Content Container -->
   <div class="page-container">
-    <h1>Shadow Intern Settings</h1>
-
-    <!-- License & Status -->
-    <section class="card">
-      <div class="card-header">
-        <h2>License & Status</h2>
+    <!-- License Tab -->
+    <div class="tab-content active" id="tab-license">
+      <div class="card">
+        <h2 class="card-title">License Key</h2>
+        <div class="license-input-group">
+          <input 
+            type="text" 
+            id="licenseKey" 
+            class="license-input" 
+            placeholder="shadow-XXXX-XXXX"
+            autocomplete="off"
+          />
+          <button class="btn btn-primary" id="checkLicenseBtn">Check status</button>
+        </div>
+        <div class="license-status-inline" id="licenseStatusInline"></div>
+        <div class="privacy-disclosure">
+          <strong>Privacy Disclosure</strong>
+          <p>This extension sends tweet text and attached media links to Shadow Intern API to generate replies. Your license key and usage data are stored locally. We do not track your browsing activity or collect personal information beyond what's necessary for the service.</p>
+        </div>
       </div>
-      <label for="licenseKey">License Key</label>
-      <input id="licenseKey" type="text" placeholder="shadow-XXXX-XXXX" />
-      <div class="hint">Required for Shadow Intern access. Enter your license key in the format: shadow-XXXX-XXXX</div>
-      <div class="status" id="licenseStatus"></div>
-    </section>
-
-    <!-- General Style -->
-    <section class="card">
-      <div class="card-header">
-        <h2>General Style (Global Prompt)</h2>
       </div>
-      <label for="generalPrompt">General Style / Persona Prompt</label>
-      <textarea id="generalPrompt" placeholder="Example: Sarcastic crypto degen, short replies, uses CT slang, no emojis."></textarea>
-      <div class="hint">This describes how Shadow Intern should talk in all replies (tone, slang, personality). Leave empty to use default style.</div>
-    </section>
 
-    <!-- Global Settings -->
-    <section class="card">
-      <div class="card-header">
-        <h2>Global Settings</h2>
-      </div>
-      <label for="maxChars">Max Characters</label>
-      <input id="maxChars" type="number" min="50" max="500" step="10" />
-      <div class="hint">Hard cap applied after generation. Range: 50-500 characters.</div>
-
-      <label for="tone">Default Tone</label>
-      <select id="tone">
+    <!-- Reply Tab -->
+    <div class="tab-content" id="tab-reply">
+      <div class="card">
+        <h2 class="card-title">Reply Settings</h2>
+        
+        <div class="form-group">
+          <label for="tone">Tone</label>
+          <select id="tone" class="form-control">
         <option value="neutral">Neutral</option>
         <option value="degen">Degen</option>
         <option value="professional">Professional</option>
         <option value="toxic">Toxic</option>
       </select>
+        </div>
 
-      <div class="checkbox-label">
-        <input id="humanizeToggle" type="checkbox" />
-        <label for="humanizeToggle" style="margin: 0;">Humanized Replies</label>
+        <div class="form-group">
+          <label>Reply Length</label>
+          <div class="segmented-control" id="lengthControl">
+            <button class="segment-btn" data-length="150">Short</button>
+            <button class="segment-btn active" data-length="220">Medium</button>
+            <button class="segment-btn" data-length="280">Long</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="checkbox-group">
+            <input type="checkbox" id="humanizeToggle" />
+        <label for="humanizeToggle">Humanized Replies</label>
       </div>
       <div class="hint">Keep replies casual + degen. Disable for neutral AI vibes.</div>
-    </section>
+        </div>
 
-    <!-- Reply Modes -->
-    <section class="card">
-      <div class="card-header">
-        <h2>Reply Modes</h2>
+        <div class="form-group">
+          <label for="maxChars">Max Characters</label>
+          <div class="slider-group">
+            <input 
+              type="range" 
+              id="maxCharsSlider" 
+              class="slider" 
+              min="50" 
+              max="500" 
+              step="10" 
+              value="220"
+            />
+            <input 
+              type="number" 
+              id="maxChars" 
+              class="slider-input" 
+              min="50" 
+              max="500" 
+              step="10" 
+              value="220"
+            />
+          </div>
+          <div class="hint">Hard cap applied after generation. Range: 50-500 characters.</div>
+        </div>
+
+        <div class="form-group">
+          <label>Preview</label>
+          <div class="preview-box" id="previewBox">
+            <div class="preview-placeholder">Preview will appear here based on your settings...</div>
+          </div>
+        </div>
       </div>
+
+      <!-- Reply Modes Section -->
+      <div class="card">
+        <h2 class="card-title">Reply Modes</h2>
       <div class="hint">Toggle, rename, and customize the prompt template per mode.</div>
-      <div id="modesContainer"></div>
-    </section>
-
-    <!-- Custom Personas -->
-    <section class="card">
-      <div class="card-header">
-        <h2>Custom Personas</h2>
+        <div class="modes-accordion" id="modesAccordion"></div>
       </div>
-      <div class="hint">Create up to 3 custom personas for different reply styles. Each persona can have its own name, description, and optional settings.</div>
-      <div id="personasContainer"></div>
-      <button id="addPersonaBtn" class="add-persona-btn">+ Add Persona</button>
-    </section>
+    </div>
 
-    <!-- Save Button -->
-    <button id="saveBtn" class="save-button">Save Settings</button>
-    <div class="status" id="status"></div>
-
-    <!-- Footer -->
-    <div class="footer">
-      <div style="margin-bottom: 8px;">
-        <strong>Shadow Intern v1.0.0</strong>
+    <!-- Personas Tab -->
+    <div class="tab-content" id="tab-personas">
+      <div class="card">
+        <div class="card-header-flex">
+          <h2 class="card-title">Custom Personas</h2>
+          <button class="btn btn-secondary" id="addPersonaBtn" disabled>+ Add Persona</button>
+        </div>
+        <div class="hint">Create up to 3 custom personas for different reply styles.</div>
+        <div class="personas-grid" id="personasGrid"></div>
       </div>
-      <div>
-        <a href="https://github.com/Ildarflame/shadow-intern-extension" target="_blank">Extension Repository</a> • 
-        <a href="https://github.com/Ildarflame/shadow-intern-server" target="_blank">Server Repository</a>
+    </div>
+
+    <!-- Advanced Tab -->
+    <div class="tab-content" id="tab-advanced">
+      <div class="card">
+        <h2 class="card-title">Global Prompt</h2>
+        <div class="form-group">
+          <label for="generalPrompt">General Style / Persona Prompt</label>
+          <textarea 
+            id="generalPrompt" 
+            class="form-control textarea-large" 
+            placeholder="Example: Sarcastic crypto degen, short replies, uses CT slang, no emojis."
+            rows="6"
+          ></textarea>
+          <div class="hint">This describes how Shadow Intern should talk in all replies (tone, slang, personality). Leave empty to use default style.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Settings Management</h2>
+        <div class="form-group">
+          <div class="button-group">
+            <button class="btn btn-secondary" id="exportBtn">Export Settings</button>
+            <button class="btn btn-secondary" id="importBtn">Import Settings</button>
+            <input type="file" id="importFile" accept=".json" style="display: none;" />
+          </div>
+        </div>
+        <div class="form-group">
+          <button class="btn btn-danger" id="resetAllBtn">Reset All Settings</button>
+          <div class="hint">This will reset all settings to defaults. This action cannot be undone.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sticky Footer -->
+  <footer class="sticky-footer">
+    <div class="footer-content">
+      <div class="saved-indicator" id="savedIndicator"></div>
+      <button class="btn btn-primary btn-large" id="saveBtn">Save changes</button>
+    </div>
+  </footer>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Confirm Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h3 class="modal-title" id="modalTitle">Confirm</h3>
+      <p class="modal-message" id="modalMessage"></p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="modalCancel">Cancel</button>
+        <button class="btn btn-danger" id="modalConfirm">Confirm</button>
       </div>
     </div>
   </div>

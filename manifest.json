@@ -4,9 +4,8 @@
   "version": "1.0.0",
   "description": "Shadow Intern adds quick AI-powered reply workflows for Twitter/X",
   "permissions": [
-    "scripting",
-    "activeTab",
-    "storage"
+    "storage",
+    "tabs"
   ],
   "host_permissions": [
     "https://twitter.com/*",

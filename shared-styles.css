@@ -1,0 +1,65 @@
+/* Shared CSS Variables for Shadow Intern Extension */
+/* Dark/Emerald theme matching shadowintern.xyz */
+
+:root {
+  /* Colors - Dark Theme */
+  --bg: #0a0a0a; /* Near black background */
+  --bg-card: #121212; /* Slightly lighter card background */
+  --bg-hover: #1a1a1a; /* Hover state */
+  
+  /* Text Colors */
+  --fg: #f5f5f5; /* Bright white text */
+  --fg-muted: #a0a0a0; /* Muted gray text */
+  --fg-dim: #707070; /* Dim gray text */
+  
+  /* Borders */
+  --border: #2a2a2a; /* Subtle border */
+  --border-hover: #3a3a3a; /* Hover border */
+  
+  /* Emerald Accents (matching shadowintern.xyz) */
+  --emerald: #16a34a; /* Primary emerald green */
+  --emerald-hover: #22c55e; /* Lighter emerald on hover */
+  --emerald-bg: rgba(22, 163, 74, 0.15); /* Emerald background tint */
+  --emerald-bg-hover: rgba(22, 163, 74, 0.25); /* Emerald background hover */
+  
+  /* Status Colors */
+  --success: #16a34a; /* Emerald for success */
+  --error: #ef4444; /* Red for errors */
+  --warning: #f59e0b; /* Amber for warnings */
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+  --shadow-emerald: 0 0 0 1px rgba(22, 163, 74, 0.2), 0 4px 6px -1px rgba(22, 163, 74, 0.1);
+  
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 24px;
+  
+  /* Typography */
+  --font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+}
+
